@@ -111,21 +111,24 @@ const database = (() => {
             if (taskIndex === -1) return null;
 
             const originalTask = { ..._cache.tasks[taskIndex] };
-            const updatedTask = { ...originalTask, ...updateData };
+            const updatedTask = { ..._cache.tasks[taskIndex], ...updateData };
 
             // Optimistic update
             _cache.tasks[taskIndex] = updatedTask;
 
             try {
-                // The backend response is the source of truth after update
                 const savedTask = await _api.request(`/tasks/${taskId}`, { method: 'PUT', body: updateData });
                 _cache.tasks[taskIndex] = savedTask; // Sync with server response
+
+                // Streak-Logik für Gewohnheiten
+                if (savedTask.completed && originalTask.habitOriginId) {
+                    await this.incrementHabitStreak(originalTask.habitOriginId);
+                }
+
                 return savedTask;
             } catch (error) {
-                // Rollback on failure
-                _cache.tasks[taskIndex] = originalTask;
+                _cache.tasks[taskIndex] = originalTask; // Rollback
                 showToast('Error: Could not update task.');
-                // Notify UI to re-render with rolled-back data
                 document.dispatchEvent(new CustomEvent('data-changed'));
                 return null;
             }
@@ -185,6 +188,14 @@ const database = (() => {
                 showToast('Error: Could not create project.');
                 return null;
             }
+        },
+
+        async incrementHabitStreak(habitId) {
+            const habit = this.getTaskById(habitId);
+            if (!habit) return;
+
+            const newStreak = (habit.streak || 0) + 1;
+            await this.updateTask(habitId, { streak: newStreak });
         },
 
         async processGoalWithAI(text) {

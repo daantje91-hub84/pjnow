@@ -20,10 +20,39 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Zuerst die Daten vom Backend laden
   await database.initialize();
 
+  // Tägliche Gewohnheiten generieren/überprüfen
+  await generateDailyHabitTasks();
+
   // Erst DANACH die restlichen UI-Komponenten initialisieren und die erste Seite anzeigen
   initializeQuickAdd();
   navigateTo("dashboard");
 });
+
+// --- LOGIK FÜR GEWOHNHEITEN (HABITS) ---
+async function generateDailyHabitTasks() {
+    console.log("Überprüfe tägliche Gewohnheiten...");
+    const allTasks = database.getTasks();
+    const habitTasks = allTasks.filter(t => t.isHabit);
+    const todayString = new Date().toISOString().slice(0, 10);
+
+    for (const habit of habitTasks) {
+        // Prüfen, ob für diese Gewohnheit heute schon eine Aufgabe existiert
+        const taskExistsForToday = allTasks.some(t => 
+            t.habitOriginId === habit.id && t.scheduled_at === todayString
+        );
+
+        if (!taskExistsForToday) {
+            console.log(`Generiere Aufgabe für Gewohnheit: ${habit.text}`);
+            await database.addTask({
+                text: habit.text,
+                projectId: habit.projectId,
+                isHabit: false, // Die erzeugte Aufgabe ist eine Instanz, keine Vorlage
+                habitOriginId: habit.id, // Verweis auf die ursprüngliche Gewohnheit
+                scheduled_at: todayString
+            });
+        }
+    }
+}
 
 // --- GLOBALE HELFERFUNKTIONEN ---
 function showToast(message) {

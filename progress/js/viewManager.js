@@ -305,7 +305,21 @@ function addTaskListeners() {
 }
 
 function addInboxListeners() {
-  // Diese Funktion bleibt unverändert
-}
+  document.querySelectorAll(".process-item-btn").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const taskId = e.target.closest(".inbox-item").dataset.taskId;
+      startGtdWizard(taskId);
+    });
+  });
 
-// ... (und alle anderen Listener-Funktionen)
+  document.querySelectorAll(".delete-item-btn").forEach((button) => {
+    button.addEventListener("click", async (e) => {
+      const taskId = e.target.closest(".inbox-item").dataset.taskId;
+      if (confirm("Möchtest du diesen Eintrag wirklich löschen?")) {
+        await database.deleteTask(taskId);
+        renderInbox(); // Inbox neu laden
+        showToast("Eintrag gelöscht.");
+      }
+    });
+  });
+}

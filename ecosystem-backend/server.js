@@ -1,9 +1,10 @@
 
-require("dotenv").config();
+require("dotenv").config({ path: require('path').resolve(__dirname, '.env') });
 const express = require("express");
 const cors = require("cors");
 const { initializeDatabase } = require("./database.js");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const path = require('path');
 
 // Sicherheitsprüfung für Umgebungsvariablen
 const requiredEnvVars = ["GEMINI_API_KEY"];
@@ -48,14 +49,17 @@ app.get("/api/projects", async (req, res) => {
 });
 
 app.post("/api/projects", async (req, res) => {
-  const { title } = req.body;
+  const { title, context_id } = req.body;
   if (!title) {
     return res.status(400).json({ error: "Title for the project is required." });
   }
   try {
     const db = await initializeDatabase();
     const newId = `proj_${Date.now()}`;
-    await db.run('INSERT INTO projects (id, title, userId, status) VALUES (?, ?, ?, ?)', [newId, title, "user_123", "active"]);
+    await db.run(
+      'INSERT INTO projects (id, title, userId, status, context_id) VALUES (?, ?, ?, ?, ?)',
+      [newId, title, "user_123", "active", context_id || null]
+    );
     const newProject = await db.get('SELECT * FROM projects WHERE id = ?', newId);
     res.status(201).json(newProject);
   } catch (err) {
@@ -78,7 +82,7 @@ app.get("/api/tasks", async (req, res) => {
 });
 
 app.post("/api/tasks", async (req, res) => {
-  const { text, projectId } = req.body;
+  const { text, projectId, isHabit, habitOriginId } = req.body;
   if (!text) {
     return res.status(400).json({ error: "Text for the task is required." });
   }
@@ -86,7 +90,10 @@ app.post("/api/tasks", async (req, res) => {
     const db = await initializeDatabase();
     const newId = `task_${Date.now()}`;
     const new_created_at = new Date().toISOString();
-    await db.run('INSERT INTO tasks (id, text, projectId, created_at) VALUES (?, ?, ?, ?)', [newId, text, projectId || null, new_created_at]);
+    await db.run(
+      'INSERT INTO tasks (id, text, projectId, created_at, isHabit, habitOriginId, streak, delegated_to, deadline, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [newId, text, projectId || null, new_created_at, isHabit || 0, habitOriginId || null, 0, delegated_to || null, deadline || null, start_time || null]
+    );
     const newTask = await db.get('SELECT * FROM tasks WHERE id = ?', newId);
     res.status(201).json(newTask);
   } catch (err) {
@@ -96,10 +103,23 @@ app.post("/api/tasks", async (req, res) => {
 
 app.put("/api/tasks/:id", async (req, res) => {
   const { id } = req.params;
-  const { text, completed } = req.body;
+  const { text, completed, streak, delegated_to, deadline, start_time } = req.body;
   try {
     const db = await initializeDatabase();
-    await db.run('UPDATE tasks SET text = ?, completed = ? WHERE id = ?', [text, completed ? 1 : 0, id]);
+    const currentTask = await db.get('SELECT * FROM tasks WHERE id = ?', id);
+    if (!currentTask) return res.status(404).json({ error: "Task not found." });
+
+    const newText = text !== undefined ? text : currentTask.text;
+    const newCompleted = completed !== undefined ? (completed ? 1 : 0) : currentTask.completed;
+    const newStreak = streak !== undefined ? streak : currentTask.streak;
+    const newDelegatedTo = delegated_to !== undefined ? delegated_to : currentTask.delegated_to;
+    const newDeadline = deadline !== undefined ? deadline : currentTask.deadline;
+    const newStartTime = start_time !== undefined ? start_time : currentTask.start_time;
+
+    await db.run(
+      'UPDATE tasks SET text = ?, completed = ?, streak = ?, delegated_to = ?, deadline = ?, start_time = ? WHERE id = ?',
+      [newText, newCompleted, newStreak, newDelegatedTo, newDeadline, newStartTime, id]
+    );
     const updatedTask = await db.get('SELECT * FROM tasks WHERE id = ?', id);
     res.json(updatedTask);
   } catch (err) {

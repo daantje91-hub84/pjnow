@@ -22,7 +22,7 @@ function closeWizard() {
 
 async function startProjectWizard() {
     closeWizard();
-    closeProcessWizard(); // Stellt sicher, dass auch der andere Wizard geschlossen ist
+    closeGtdWizard(); // Stellt sicher, dass der GTD-Wizard geschlossen ist
     try {
         const response = await fetch('views/wizard_content.html');
         if (!response.ok) throw new Error('Wizard-Datei nicht gefunden');
@@ -247,138 +247,259 @@ async function createProjectWithAI() {
 
 
 // ===================================================================
-// TEIL 2: INBOX-VERARBEITUNGS-WIZARD
+// TEIL 2: INBOX-VERARBEITUNGS-WIZARD (GTD-Wizard)
 // ===================================================================
 
-// Hält den Zustand des Wizards, während er geöffnet ist
-let processWizardState = {};
+let gtdWizardState = {};
+let gtdWizardModal;
 
-function closeProcessWizard() {
-    document.getElementById('process-wizard-modal')?.remove();
-    processWizardState = {}; // Zustand zurücksetzen
+function closeGtdWizard() {
+    gtdWizardModal?.remove();
+    gtdWizardState = {}; // Zustand zurücksetzen
 }
 
-async function startProcessWizard(taskId) {
+async function startGtdWizard(taskId) {
     closeWizard(); // Sicherstellen, dass keine anderen Wizards offen sind
+    closeGtdWizard(); // Sicherstellen, dass der GTD-Wizard nicht doppelt offen ist
+
     const task = database.getTaskById(taskId);
     if (!task) {
-        console.error("Task für Verarbeitung nicht gefunden.");
+        console.error("Task für GTD-Verarbeitung nicht gefunden.");
         return;
     }
 
     // Initialisiere den Zustand für diesen Wizard
-    processWizardState = {
+    gtdWizardState = {
         currentStep: 1,
         taskId: taskId,
-        taskText: task.text
+        originalTaskText: task.text,
+        currentTaskText: task.text, // Der Text, der im Wizard bearbeitet wird
+        projectId: task.projectId, // Falls schon einem Projekt zugeordnet
+        delegatedTo: null,
+        deadline: null,
+        startTime: null,
+        isNewProject: false, // Flag, ob ein neues Projekt erstellt wird
+        selectedProjectId: null, // Das ausgewählte Projekt im Schritt 5
     };
 
     try {
-        const response = await fetch('views/inbox_wizard_content.html');
-        if (!response.ok) throw new Error('Inbox-Wizard-Datei nicht gefunden');
+        const response = await fetch('views/gtd_wizard_content.html');
+        if (!response.ok) throw new Error('GTD-Wizard-Datei nicht gefunden');
         document.body.insertAdjacentHTML('beforeend', await response.text());
         
-        const wizardModal = document.getElementById('process-wizard-modal');
-        
-        // UI-Elemente initialisieren
-        wizardModal.querySelector('#process-wizard-task-text').textContent = processWizardState.taskText;
-        
+        gtdWizardModal = document.getElementById('gtd-wizard-modal');
+        if (!gtdWizardModal) return;
+
         // Event-Listener für alle Aktionen im Wizard
-        wizardModal.addEventListener('click', handleProcessWizardAction);
-        wizardModal.querySelector('#close-process-wizard-btn').addEventListener('click', closeProcessWizard);
-        wizardModal.querySelector('#process-prev-button').addEventListener('click', () => navigateProcessWizard(-1));
+        gtdWizardModal.addEventListener('click', handleGtdWizardAction);
+        gtdWizardModal.querySelector('#gtd-close-wizard-btn').addEventListener('click', closeGtdWizard);
+        gtdWizardModal.querySelector('#gtd-prev-button').addEventListener('click', () => navigateGtdWizard(-1));
+        gtdWizardModal.querySelector('#gtd-next-button').addEventListener('click', () => navigateGtdWizard(1));
+        gtdWizardModal.querySelector('#gtd-finish-button').addEventListener('click', finishGtdWizard);
+
+        // Input-Felder überwachen
+        gtdWizardModal.querySelector('#gtd-task-text-input')?.addEventListener('input', (e) => {
+            gtdWizardState.currentTaskText = e.target.value;
+            updateGtdWizardUI();
+        });
+        gtdWizardModal.querySelector('#gtd-delegated-to-input')?.addEventListener('input', (e) => {
+            gtdWizardState.delegatedTo = e.target.value;
+            updateGtdWizardUI();
+        });
+        gtdWizardModal.querySelector('#gtd-deadline-input')?.addEventListener('change', (e) => {
+            gtdWizardState.deadline = e.target.value;
+            updateGtdWizardUI();
+        });
+        gtdWizardModal.querySelector('#gtd-start-time-input')?.addEventListener('change', (e) => {
+            gtdWizardState.startTime = e.target.value;
+            updateGtdWizardUI();
+        });
 
         // Den ersten Schritt anzeigen
-        updateProcessWizardUI();
+        updateGtdWizardUI();
 
     } catch (error) {
-        console.error("Fehler beim Laden des Inbox-Wizards:", error);
+        console.error("Fehler beim Laden des GTD-Wizards:", error);
     }
 }
 
-function handleProcessWizardAction(e) {
+async function handleGtdWizardAction(e) {
     const action = e.target.closest('[data-action]')?.dataset.action;
     if (!action) return;
 
-    const { taskId } = processWizardState;
-
     switch (action) {
         case 'is_task':
-            navigateProcessWizard(1); // Gehe zu Schritt 2
+            gtdWizardState.currentStep = 2;
             break;
         case 'is_note':
-            database.updateTask(taskId, { isNote: true });
+            await database.updateTask(gtdWizardState.taskId, { isNote: true, projectId: null, scheduled_at: null });
             showToast("Eintrag als Notiz gespeichert.");
-            closeProcessWizard();
+            closeGtdWizard();
             renderInbox();
-            break;
-        case 'trash':
-            if (confirm(`Möchtest du "${processWizardState.taskText}" wirklich löschen?`)) {
-                database.deleteTask(taskId);
+            return;
+        case 'is_trash':
+            if (confirm(`Möchtest du "${gtdWizardState.originalTaskText}" wirklich löschen?`)) {
+                await database.deleteTask(gtdWizardState.taskId);
                 showToast("Eintrag gelöscht.");
-                closeProcessWizard();
+                closeGtdWizard();
                 renderInbox();
             }
+            return;
+        case 'do_it_now':
+            await database.updateTask(gtdWizardState.taskId, { completed: true, scheduled_at: new Date().toISOString().slice(0, 10) });
+            showToast("Aufgabe sofort erledigt!");
+            closeGtdWizard();
+            renderInbox();
+            return;
+        case 'defer_or_delegate':
+            gtdWizardState.currentStep = 4;
             break;
-        case 'new_project':
-            // TODO: Logik zum Erstellen eines neuen Projekts aus dem Task
-            alert('Funktion "Neues Projekt erstellen" kommt als nächstes.');
-            closeProcessWizard();
+        case 'assign_to_project':
+            gtdWizardState.currentStep = 5;
+            await populateProjectList();
             break;
         case 'single_task':
-            navigateProcessWizard(1); // Gehe zu Schritt 3 (Projektzuordnung)
+            gtdWizardState.currentStep = 6;
             break;
-        case 'standalone_task':
-            database.updateTask(taskId, { scheduled_at: new Date().toISOString().slice(0, 10) }); // Für heute planen
-            showToast("Aufgabe für heute geplant.");
-            closeProcessWizard();
-            renderInbox();
-            navigateTo('today-content');
+        case 'create_new_project_from_task':
+            gtdWizardState.isNewProject = true;
+            // Erstelle das Projekt und weise die Aufgabe zu
+            const newProject = await database.addProject({ title: gtdWizardState.currentTaskText });
+            if (newProject) {
+                gtdWizardState.selectedProjectId = newProject.id;
+                await database.updateTask(gtdWizardState.taskId, { projectId: newProject.id });
+                showToast(`Projekt "${newProject.title}" erstellt und Aufgabe zugewiesen.`);
+                gtdWizardState.currentStep = 6; // Gehe direkt zum Terminieren
+            } else {
+                showToast('Fehler beim Erstellen des Projekts.');
+                // Bleibe im aktuellen Schritt oder gehe zurück
+                return;
+            }
+            break;
+        case 'do_it_myself':
+            gtdWizardState.currentStep = 7;
+            break;
+        case 'delegate_task':
+            // Zeige Eingabefeld für Delegierung
+            gtdWizardState.currentStep = 7; // Gehe zum Abschluss
+            gtdWizardModal.querySelector('#gtd-delegate-input-container').classList.remove('hidden');
             break;
         default:
-             // Dynamische Projekt-Buttons
-            if (action.startsWith('assign_to_project_')) {
-                const projectId = action.replace('assign_to_project_', '');
-                database.updateTask(taskId, { project_id: projectId });
-                showToast(`Aufgabe zum Projekt "${database.getProjectById(projectId).title}" hinzugefügt.`);
-                closeProcessWizard();
-                renderInbox();
+            // Dynamische Projekt-Buttons im Schritt 5
+            if (action.startsWith('select_project_')) {
+                gtdWizardState.selectedProjectId = action.replace('select_project_', '');
+                await database.updateTask(gtdWizardState.taskId, { projectId: gtdWizardState.selectedProjectId });
+                showToast(`Aufgabe Projekt zugewiesen.`);
+                gtdWizardState.currentStep = 6; // Gehe zum Terminieren
             }
             break;
     }
+    updateGtdWizardUI();
 }
 
-function navigateProcessWizard(direction) {
-    processWizardState.currentStep += direction;
-    updateProcessWizardUI();
+function navigateGtdWizard(direction) {
+    gtdWizardState.currentStep += direction;
+    updateGtdWizardUI();
 }
 
-function updateProcessWizardUI() {
-    const wizardModal = document.getElementById('process-wizard-modal');
-    if (!wizardModal) return;
+async function finishGtdWizard() {
+    const updateData = {
+        text: gtdWizardState.currentTaskText,
+        projectId: gtdWizardState.selectedProjectId || null, // Falls kein Projekt gewählt wurde
+        delegated_to: gtdWizardState.delegatedTo || null,
+        deadline: gtdWizardState.deadline || null,
+        start_time: gtdWizardState.startTime || null,
+        completed: false // Standardmäßig nicht erledigt beim Planen
+    };
 
-    // Alle Schritte ausblenden
-    wizardModal.querySelectorAll('.wizard-step').forEach(step => step.classList.add('hidden'));
-    
-    // Den aktuellen Schritt anzeigen
-    const currentStepEl = wizardModal.querySelector(`#process-step-${processWizardState.currentStep}`);
+    // Wenn delegiert, aber keine Person angegeben, bleibe im Schritt
+    if (gtdWizardState.currentStep === 6 && gtdWizardState.delegatedTo === null && gtdWizardModal.querySelector('#gtd-delegate-input-container').classList.contains('hidden') === false) {
+        showToast('Bitte gib an, an wen du delegierst.');
+        return;
+    }
+
+    await database.updateTask(gtdWizardState.taskId, updateData);
+    showToast('Aufgabe erfolgreich geplant!');
+    closeGtdWizard();
+    renderInbox(); // Inbox neu laden
+    navigateTo('today-content'); // Oder zur Today-Ansicht navigieren
+}
+
+function updateGtdWizardUI() {
+    const currentStepEl = gtdWizardModal.querySelector(`#gtd-step-${gtdWizardState.currentStep}`);
+    gtdWizardModal.querySelectorAll('.wizard-step').forEach(step => step.classList.add('hidden'));
     if (currentStepEl) currentStepEl.classList.remove('hidden');
 
-    // Zurück-Button verwalten
-    wizardModal.querySelector('#process-prev-button').classList.toggle('hidden', processWizardState.currentStep === 1);
+    const prevButton = gtdWizardModal.querySelector('#gtd-prev-button');
+    const nextButton = gtdWizardModal.querySelector('#gtd-next-button');
+    const finishButton = gtdWizardModal.querySelector('#gtd-finish-button');
 
-    // Spezifische Logik für Schritt 3: Projektliste laden
-    if (processWizardState.currentStep === 3) {
-        const projectListContainer = wizardModal.querySelector('#project-list-container');
-        const projects = database.getActiveProjects();
-        if (projects.length > 0) {
-            projectListContainer.innerHTML = projects.map(p => `
-                <button type="button" class="option-button" data-action="assign_to_project_${p.id}">
-                    ${database.getContextById(p.context_id)?.emoji || '📁'} ${p.title}
-                </button>
-            `).join('');
-        } else {
-            projectListContainer.innerHTML = '<p>Du hast noch keine aktiven Projekte.</p>';
-        }
+    // Standard-Buttons ausblenden
+    prevButton.classList.add('hidden');
+    nextButton.classList.add('hidden');
+    finishButton.classList.add('hidden');
+
+    // Logik für die Sichtbarkeit der Buttons und Eingabefelder
+    switch (gtdWizardState.currentStep) {
+        case 1: // Klären
+            // Keine Navigationsbuttons, nur Aktionsbuttons im HTML
+            break;
+        case 2: // Konkretisieren
+            gtdWizardModal.querySelector('#gtd-task-text-input').value = gtdWizardState.currentTaskText;
+            prevButton.classList.remove('hidden');
+            nextButton.classList.remove('hidden');
+            nextButton.disabled = gtdWizardState.currentTaskText.length < 5; // Mindestlänge
+            break;
+        case 3: // 2-Minuten-Regel
+            // Keine Navigationsbuttons, nur Aktionsbuttons im HTML
+            break;
+        case 4: // Projekt oder Einzelaufgabe
+            // Keine Navigationsbuttons, nur Aktionsbuttons im HTML
+            break;
+        case 5: // Projektliste
+            prevButton.classList.remove('hidden');
+            // nextButton bleibt hidden, da Auswahl über Projekt-Buttons erfolgt
+            break;
+        case 6: // Delegieren oder selbst erledigen
+            prevButton.classList.remove('hidden');
+            // nextButton bleibt hidden, da Auswahl über Aktionsbuttons erfolgt
+            gtdWizardModal.querySelector('#gtd-delegate-input-container').classList.add('hidden'); // Standardmäßig ausblenden
+            break;
+        case 7: // Terminieren
+            prevButton.classList.remove('hidden');
+            finishButton.classList.remove('hidden');
+            // Werte aus dem State in die Felder laden
+            gtdWizardModal.querySelector('#gtd-deadline-input').value = gtdWizardState.deadline || '';
+            gtdWizardModal.querySelector('#gtd-start-time-input').value = gtdWizardState.startTime || '';
+            break;
+    }
+
+    gtdWizardModal.classList.remove('hidden');
+}
+
+async function populateProjectList() {
+    const container = gtdWizardModal.querySelector('#gtd-project-list');
+    if (!container) return;
+    const projects = database.getActiveProjects(); // Oder alle Projekte, je nach Anforderung
+    if (projects.length > 0) {
+        container.innerHTML = projects.map(p => `
+            <button type="button" class="option-button" data-action="select_project_${p.id}">
+                ${p.title}
+            </button>
+        `).join('');
+    } else {
+        container.innerHTML = '<p>Du hast noch keine aktiven Projekte.</p>';
     }
 }
+
+// ===================================================================
+// TEIL 3: HELFERFUNKTIONEN (aus altem Inbox-Wizard, ggf. anpassen)
+// ===================================================================
+
+// Diese Funktionen sind jetzt Teil des GTD-Wizards oder werden nicht mehr benötigt
+// let processWizardState = {};
+// function closeProcessWizard() { ... }
+// async function startProcessWizard(taskId) { ... }
+// function handleProcessWizardAction(e) { ... }
+// function navigateProcessWizard(direction) { ... }
+// function updateProcessWizardUI() { ... }

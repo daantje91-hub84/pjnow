@@ -126,6 +126,12 @@ async function initializeDatabase() {
         completed INTEGER DEFAULT 0, -- 0 for false, 1 for true
         created_at TEXT,
         scheduled_at TEXT,
+        isHabit INTEGER DEFAULT 0,
+        habitOriginId TEXT,
+        streak INTEGER DEFAULT 0,
+        delegated_to TEXT,
+        deadline TEXT,
+        start_time TEXT,
         FOREIGN KEY (projectId) REFERENCES projects (id)
       );
     `);

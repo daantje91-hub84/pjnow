@@ -1,0 +1,209 @@
+<div id="gtd-wizard-modal" class="modal-overlay hidden">
+  <div class="wizard-container">
+    <button class="close-button" id="gtd-close-wizard-btn"><span class="material-icons">close</span></button>
+    
+    <main class="wizard-content">
+      <!-- Step 1: Clarify - What is it? -->
+      <section id="gtd-step-1" class="wizard-step">
+        <h1>Ist dieser Eintrag umsetzbar?</h1>
+        <p>Handelt es sich um eine konkrete Aufgabe, die du erledigen kannst?</p>
+        <div class="options-container vertical">
+          <button type="button" class="option-button" data-action="is_task">
+            <span class="material-icons">check_circle_outline</span> Ja, es ist eine Aufgabe
+          </button>
+          <button type="button" class="option-button" data-action="is_note">
+            <span class="material-icons">description</span> Nein, es ist Referenzmaterial
+          </button>
+          <button type="button" class="option-button" data-action="is_trash">
+            <span class="material-icons">delete_outline</span> Nein, das ist Müll
+          </button>
+        </div>
+      </section>
+
+      <!-- Step 2: Concretize - What's the next action? -->
+      <section id="gtd-step-2" class="wizard-step hidden">
+        <h1>Was ist der allererste, physisch sichtbare nächste Schritt?</h1>
+        <p>Passe den Text an, um die Aufgabe konkret zu formulieren.</p>
+        <input type="text" id="gtd-task-text-input" class="wizard-input" placeholder="Z.B. 'Entwurf für Folie 1 erstellen'" autocomplete="off">
+      </section>
+
+      <!-- Step 3: The 2-Minute Rule -->
+      <section id="gtd-step-3" class="wizard-step hidden">
+        <h1>Kannst du diesen Schritt in weniger als 2 Minuten erledigen?</h1>
+        <div class="options-container vertical">
+          <button type="button" class="option-button" data-action="do_it_now">
+            <span class="material-icons">timer</span> Ja, erledige es sofort!
+          </button>
+          <button type="button" class="option-button" data-action="defer_or_delegate">
+            <span class="material-icons">schedule</span> Nein, dauert länger als 2 Minuten
+          </button>
+        </div>
+      </section>
+
+      <!-- Step 4: Project or Single Task? -->
+      <section id="gtd-step-4" class="wizard-step hidden">
+        <h1>Gehört diese Aufgabe zu einem größeren Ziel?</h1>
+        <div class="options-container vertical">
+          <button type="button" class="option-button" data-action="assign_to_project">
+            <span class="material-icons">topic</span> Ja, einem Projekt zuordnen
+          </button>
+          <button type="button" class="option-button" data-action="single_task">
+            <span class="material-icons">task_alt</span> Nein, es ist eine Einzelaufgabe
+          </button>
+        </div>
+      </section>
+
+      <!-- Step 5: Organize - Delegate or Defer? (Project List / New Project) -->
+      <section id="gtd-step-5" class="wizard-step hidden">
+        <h1>Wähle ein Projekt oder erstelle ein neues:</h1>
+        <div id="gtd-project-list" class="options-container vertical">
+          <!-- Projects will be loaded here by JS -->
+        </div>
+        <button type="button" class="option-button" id="gtd-create-new-project-btn" data-action="create_new_project_from_task">
+          <span class="material-icons">add</span> Neues Projekt erstellen
+        </button>
+      </section>
+
+      <!-- Step 6: Schedule - When to do it? (Delegate or Schedule) -->
+      <section id="gtd-step-6" class="wizard-step hidden">
+        <h1>Was soll mit dieser Aufgabe geschehen?</h1>
+        <div class="options-container vertical">
+          <button type="button" class="option-button" data-action="do_it_myself">
+            <span class="material-icons">person</span> Ich muss es selbst erledigen
+          </button>
+          <button type="button" class="option-button" data-action="delegate_task">
+            <span class="material-icons">group</span> Ich kann es delegieren
+          </button>
+        </div>
+        <div id="gtd-delegate-input-container" class="hidden" style="margin-top: 16px;">
+            <input type="text" id="gtd-delegated-to-input" class="wizard-input" placeholder="An wen delegieren? (Name oder E-Mail)">
+        </div>
+      </section>
+
+      <!-- Step 7: Final Scheduling -->
+      <section id="gtd-step-7" class="wizard-step hidden">
+        <h1>Plane diese Aufgabe:</h1>
+        <div class="input-group">
+            <label for="gtd-deadline-input">Fällig am:</label>
+            <input type="date" id="gtd-deadline-input" class="wizard-input">
+        </div>
+        <div class="input-group" style="margin-top: 16px;">
+            <label for="gtd-start-time-input">Beginnen um:</label>
+            <input type="time" id="gtd-start-time-input" class="wizard-input">
+        </div>
+      </section>
+
+    </main>
+    <footer class="wizard-nav">
+        <button type="button" id="gtd-prev-button" class="button-wizard secondary hidden"><span class="material-icons">arrow_back</span><span>Zurück</span></button>
+        <button type="button" id="gtd-next-button" class="button-wizard hidden"><span>Weiter</span><span class="material-icons">arrow_forward</span></button>
+        <button type="button" id="gtd-finish-button" class="button-wizard hidden"><span>Fertigstellen</span><span class="material-icons">check_circle_outline</span></button>
+    </footer>
+  </div>
+</div>
+
+<style>
+/* Basic Wizard Styles (adjust as needed for your app's theme) */
+.wizard-container {
+    max-width: 600px;
+    margin: 50px auto;
+    background: var(--background-color);
+    padding: 30px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    position: relative;
+}
+.wizard-container h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+.wizard-container p {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+.options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.options-container.vertical {
+    flex-direction: column;
+}
+.option-button {
+    background: var(--card-background);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 15px 20px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-grow: 1;
+    justify-content: flex-start;
+    color: var(--text-color);
+    transition: all 0.2s ease;
+}
+.option-button:hover {
+    background: var(--hover-color);
+    border-color: var(--primary-color);
+}
+.option-button.selected {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+.option-button.selected .material-icons {
+    color: white;
+}
+.wizard-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: 16px;
+    box-sizing: border-box;
+}
+.wizard-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+.button-wizard {
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease;
+}
+.button-wizard.secondary {
+    background: var(--light-gray);
+    color: var(--text-color);
+}
+.button-wizard.secondary:hover {
+    background: var(--border-color);
+}
+.button-wizard:not(.secondary) {
+    background: var(--primary-color);
+    color: white;
+}
+.button-wizard:not(.secondary):hover {
+    background: var(--primary-dark);
+}
+.button-wizard:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+</style>
