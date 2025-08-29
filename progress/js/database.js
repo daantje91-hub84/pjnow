@@ -193,18 +193,17 @@ const database = (() => {
         getProjects: () => _cache.projects,
         getTaskById: (id) => _cache.tasks.find(t => t.id === id),
         getProjectById: (id) => _cache.projects.find(p => p.id === id),
-        getActiveProjects: () => _cache.projects.filter(p => !p.archived),
+        getActiveProjects: () => _cache.projects.filter(p => p.status === 'active'),
         getTasksByProjectId: (projectId) => _cache.tasks.filter(t => t.projectId === projectId),
         
         /**
-         * Gets tasks due today or overdue.
+         * Gets tasks scheduled for today.
          * @returns {Array<object>}
          */
         getTodayTasks() {
-            const today = new Date();
-            today.setHours(23, 59, 59, 999); // End of today
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
             return _cache.tasks.filter(task => 
-                !task.completed && task.dueDate && new Date(task.dueDate) <= today
+                !task.completed && task.scheduled_at && task.scheduled_at.startsWith(today)
             );
         },
 
@@ -219,9 +218,9 @@ const database = (() => {
             today.setHours(0, 0, 0, 0); // Start of today
 
             return _cache.tasks.filter(task => {
-                if (task.completed || !task.dueDate) return false;
-                const dueDate = new Date(task.dueDate);
-                return dueDate >= today && dueDate <= nextWeek;
+                if (task.completed || !task.scheduled_at) return false;
+                const scheduledDate = new Date(task.scheduled_at);
+                return scheduledDate >= today && scheduledDate <= nextWeek;
             });
         }
     };

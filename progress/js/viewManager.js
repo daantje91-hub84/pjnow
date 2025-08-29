@@ -81,7 +81,7 @@ function renderProjects() {
   const grid = document.getElementById("projects-grid-projects");
   if (!grid) return;
   grid.innerHTML = "";
-  database.projects.forEach((project) => {
+  database.getProjects().forEach((project) => {
     grid.innerHTML += createProjectCardHtml(project);
   });
   addProjectCardListeners();
