@@ -421,17 +421,23 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const runOnboardingOrInit = async () => {
-    const savedPath = await window.electronAPI.getSetting("notesDirectory");
-    if (savedPath) {
-      initApp(savedPath);
-    } else {
-      editorContainer.classList.add("hidden");
-      bottomContainer.classList.add("hidden");
-      placeholder.classList.remove("hidden");
-      placeholder.innerHTML = `<p class="font-headline text-4xl mb-4">Willkommen bei Now</p><p class="text-xl mb-8">Bitte wähle einen Ordner aus, um deine Notizen zu speichern.</p><button id="select-folder-btn" class="font-button bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg tracking-wider">\"Tresor\" auswählen</button>`;
-      document
-        .getElementById("select-folder-btn")
-        .addEventListener("click", selectFolder);
+    try {
+      console.log("runOnboardingOrInit called");
+      const savedPath = await window.electronAPI.getSetting("notesDirectory");
+      console.log("savedPath:", savedPath);
+      if (savedPath) {
+        initApp(savedPath);
+      } else {
+        editorContainer.classList.add("hidden");
+        bottomContainer.classList.add("hidden");
+        placeholder.classList.remove("hidden");
+        placeholder.innerHTML = `<p class=\"font-headline text-4xl mb-4\">Willkommen bei Now</p><p class=\"text-xl mb-8\">Bitte wähle einen Ordner aus, um deine Notizen zu speichern.</p><button id=\"select-folder-btn\" class=\"font-button bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg tracking-wider\">\"Tresor\" auswählen</button>`;
+        document
+          .getElementById("select-folder-btn")
+          .addEventListener("click", selectFolder);
+      }
+    } catch (error) {
+      console.error("Error in runOnboardingOrInit:", error);
     }
   };
 
@@ -737,8 +743,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setTimeout(() => {
     startText.classList.remove("opacity-0");
-    startText.classList.add("animate-pulse");
-  }, 5000);
+  }, 1000);
 
   splashScreen.addEventListener("click", () => {
     splashScreen.classList.add("hidden-view");
