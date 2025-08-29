@@ -74,7 +74,6 @@ function renderDashboard() {
     grid.innerHTML += createProjectCardHtml(project);
   });
   addProjectCardListeners();
-  setupWizardTriggers();
 }
 
 function renderProjects() {
@@ -85,7 +84,6 @@ function renderProjects() {
     grid.innerHTML += createProjectCardHtml(project);
   });
   addProjectCardListeners();
-  setupWizardTriggers();
 }
 
 function renderToday() {

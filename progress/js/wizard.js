@@ -6,13 +6,15 @@
 
 // ===================================================================
 // TEIL 1: PROJEKTERSTELLUNGS-WIZARD
+// Event-Delegation für die Wizard-Trigger, da die Buttons dynamisch geladen werden.
 // ===================================================================
 
-function setupWizardTriggers() {
-    document.querySelectorAll('#open-wizard-btn, #open-wizard-btn-filled, #open-wizard-btn-projects').forEach(btn => {
-        if(btn) btn.addEventListener('click', startProjectWizard);
-    });
-}
+document.body.addEventListener('click', function(event) {
+    const wizardButton = event.target.closest('#open-wizard-btn, #open-wizard-btn-filled, #open-wizard-btn-projects');
+    if (wizardButton) {
+        startProjectWizard();
+    }
+});
 
 function closeWizard() {
     document.getElementById('wizard-modal')?.remove();
@@ -37,45 +39,65 @@ function initializeWizard() {
     };
 
     let wizardStep = 0;
-    let totalSteps = 4;
+    let totalSteps = 4; // Standard für manuellen Pfad
 
     const wizardModal = document.getElementById('wizard-modal');
     if (!wizardModal) return;
 
     function updateWizardUI() {
+        const progressContainer = wizardModal.querySelector('.progress-bar');
         const progressLabel = wizardModal.querySelector('#progress-label');
         const progressFill = wizardModal.querySelector('#progress-fill');
         const prevButton = wizardModal.querySelector('#prev-button');
         const nextButton = wizardModal.querySelector('#next-button');
         
         wizardModal.querySelectorAll('.wizard-step').forEach(step => step.classList.add('hidden'));
-        wizardModal.querySelector(`#step-${wizardStep}`)?.classList.remove('hidden');
+        
+        // Logik zur Anzeige der Schritte basierend auf dem Wizard-Typ
+        if (newProjectData.wizardType === 'ai') {
+            progressContainer.style.display = 'none'; // Keine Schritte für KI
+            wizardModal.querySelector(`#step-1`).classList.remove('hidden'); // Nur Zieleingabe
+        } else {
+            progressContainer.style.display = 'block';
+            wizardModal.querySelector(`#step-${wizardStep}`)?.classList.remove('hidden');
+        }
 
         if (progressLabel) progressLabel.textContent = `Schritt ${wizardStep + 1} von ${totalSteps}`;
         if (progressFill) progressFill.style.width = `${((wizardStep + 1) / totalSteps) * 100}%`;
-        if (prevButton) prevButton.classList.toggle('hidden', wizardStep === 0);
+        if (prevButton) prevButton.classList.toggle('hidden', wizardStep === 0 || newProjectData.wizardType === 'ai');
         
         if (nextButton) {
             let isEnabled = false;
             let buttonText = "Weiter";
             let buttonIcon = "arrow_forward";
 
-            switch(wizardStep) {
-                case 0: isEnabled = newProjectData.wizardType === 'manual'; break;
-                case 1: isEnabled = newProjectData.goal && newProjectData.goal.length >= 5; break;
-                case 2: isEnabled = newProjectData.context_id !== null; break;
-                case 3:
-                    isEnabled = true;
-                    buttonText = "Projekt erstellen";
-                    buttonIcon = "check_circle_outline";
-                    break;
+            if (newProjectData.wizardType === 'ai') {
+                isEnabled = newProjectData.goal && newProjectData.goal.length >= 10;
+                buttonText = "Projekt mit KI erstellen";
+                buttonIcon = "auto_awesome";
+            } else {
+                 switch(wizardStep) {
+                    case 0: isEnabled = newProjectData.wizardType === 'manual'; break;
+                    case 1: isEnabled = newProjectData.goal && newProjectData.goal.length >= 5; break;
+                    case 2: isEnabled = newProjectData.context_id !== null; break;
+                    case 3:
+                        isEnabled = true;
+                        buttonText = "Projekt erstellen";
+                        buttonIcon = "check_circle_outline";
+                        break;
+                }
             }
             nextButton.disabled = !isEnabled;
             nextButton.innerHTML = `<span>${buttonText}</span><span class="material-icons">${buttonIcon}</span>`;
         }
     }
     
-    function nextStep() {
+    async function nextStep() {
+        if (newProjectData.wizardType === 'ai') {
+            await createProjectWithAI();
+            return;
+        }
+
         if (wizardStep < totalSteps - 1) {
             wizardStep++;
             if (wizardStep === 2) {
@@ -83,11 +105,7 @@ function initializeWizard() {
             }
             updateWizardUI();
         } else {
-            const newProject = createNewProject();
-            closeWizard();
-            if (newProject) {
-                navigateTo('project-detail-content', { projectId: newProject.id });
-            }
+            await createNewManualProject();
         }
     }
     
@@ -127,11 +145,15 @@ function initializeWizard() {
     const step0 = wizardModal.querySelector('#step-0');
     if (step0) {
         step0.addEventListener('click', (e) => {
-            const typeBtn = e.target.closest('[data-wizard-type="manual"]');
+            const typeBtn = e.target.closest('[data-wizard-type]');
             if (typeBtn) {
                 step0.querySelectorAll('.option-button').forEach(btn => btn.classList.remove('selected'));
                 typeBtn.classList.add('selected');
-                newProjectData.wizardType = 'manual';
+                newProjectData.wizardType = typeBtn.dataset.wizardType;
+                
+                if (newProjectData.wizardType === 'manual') {
+                    wizardStep = 1; // Springe zum nächsten Schritt
+                }
                 updateWizardUI();
             }
         });
@@ -159,12 +181,14 @@ function initializeWizard() {
 function populateContextOptions() {
     const container = document.getElementById('context-options');
     if (!container) return;
-    container.innerHTML = database.contexts.map(context => 
+    // Annahme: database.contexts ist verfügbar. Ggf. muss dies aus der DB geladen werden.
+    const contexts = [{id: 'ctx_1', emoji: '🏃', title: 'Fitness'}, {id: 'ctx_2', emoji: '🏠', title: 'Zuhause'}, {id: 'ctx_4', emoji: '♟️', title: 'Lernen'}];
+    container.innerHTML = contexts.map(context => 
         `<button type="button" class="option-button" data-value="${context.id}">${context.emoji} ${context.title}</button>`
     ).join('');
 }
 
-function createNewProject() {
+async function createNewManualProject() {
     if (!newProjectData.goal) return null;
 
     const milestoneInputs = document.querySelectorAll('#milestones-container .milestone-input');
@@ -180,12 +204,45 @@ function createNewProject() {
     const projectToCreate = {
         title: newProjectData.goal,
         context_id: newProjectData.context_id,
-        milestones: milestones
+        // milestones werden aktuell nicht im Backend gespeichert, aber die Struktur ist hier
     };
 
-    const newProject = database.addProject(projectToCreate);
-    
+    const newProject = await database.addProject(projectToCreate);
+    closeWizard();
+    if (newProject) {
+        navigateTo('project-detail-content', { projectId: newProject.id });
+    }
     return newProject;
+}
+
+async function createProjectWithAI() {
+    if (!newProjectData.goal) return;
+
+    showToast('🤖 KI analysiert dein Ziel und erstellt einen Plan...');
+    const aiResult = await database.processGoalWithAI(newProjectData.goal);
+    closeWizard();
+
+    if (aiResult && aiResult.id) {
+        // Annahme: Die KI gibt ein Projekt-ähnliches Objekt zurück.
+        // Wir erstellen das Projekt und die zugehörigen Aufgaben.
+        const projectToCreate = { title: aiResult.id };
+        const newProject = await database.addProject(projectToCreate);
+
+        if (newProject && aiResult.tasks && aiResult.tasks.length > 0) {
+            for (const task of aiResult.tasks) {
+                await database.addTask({ text: task.text, projectId: newProject.id });
+            }
+            showToast('✅ KI-Projekt und Aufgaben erfolgreich erstellt!');
+            navigateTo('project-detail-content', { projectId: newProject.id });
+        } else if (newProject) {
+            showToast('✅ KI-Projekt erfolgreich erstellt!');
+            navigateTo('project-detail-content', { projectId: newProject.id });
+        } else {
+            showToast('❌ Fehler beim Speichern des KI-Projekts.');
+        }
+    } else {
+        showToast('❌ Die KI konnte keinen Plan für dieses Ziel erstellen.');
+    }
 }
 
 

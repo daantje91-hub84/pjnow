@@ -187,6 +187,16 @@ const database = (() => {
             }
         },
 
+        async processGoalWithAI(text) {
+            try {
+                const processedData = await _api.request('/process-note', { method: 'POST', body: { text } });
+                return processedData;
+            } catch (error) {
+                showToast('Error processing with AI.');
+                return null;
+            }
+        },
+
         // --- Getter Functions (operating on the local cache) ---
 
         getTasks: () => _cache.tasks,
@@ -195,6 +205,7 @@ const database = (() => {
         getProjectById: (id) => _cache.projects.find(p => p.id === id),
         getActiveProjects: () => _cache.projects.filter(p => p.status === 'active'),
         getTasksByProjectId: (projectId) => _cache.tasks.filter(t => t.projectId === projectId),
+        getInboxTasks: () => _cache.tasks.filter(t => !t.projectId),
         
         /**
          * Gets tasks scheduled for today.
@@ -222,6 +233,20 @@ const database = (() => {
                 const scheduledDate = new Date(task.scheduled_at);
                 return scheduledDate >= today && scheduledDate <= nextWeek;
             });
+        },
+
+        /**
+         * Calculates the completion progress of a project in percent.
+         * @param {string|number} projectId - The ID of the project.
+         * @returns {number} The progress percentage (0-100).
+         */
+        calculateProjectProgress(projectId) {
+            const tasksForProject = this.getTasksByProjectId(projectId);
+            if (tasksForProject.length === 0) {
+                return 0; // No tasks, no progress
+            }
+            const completedTasks = tasksForProject.filter(task => task.completed).length;
+            return Math.round((completedTasks / tasksForProject.length) * 100);
         }
     };
 
