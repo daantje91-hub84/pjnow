@@ -1,129 +1,230 @@
-// js/database.js
+/**
+ * @file database.js
+ * @description Central data management interface for the Progress application.
+ * Handles all communication with the backend, manages a local cache,
+ * and provides data access methods to the rest of the application.
+ * Implements optimistic updates for a responsive user experience.
+ */
 
-const database = {
-  // Lokaler Cache, um die Daten nach dem Laden zu speichern
-  projects: [],
-  tasks: [],
-  contexts: [
-    // Kontexte können vorerst statisch bleiben
-    { id: "ctx_1", title: "Sport & Körper", emoji: "🏃‍♂️" },
-    { id: "ctx_2", title: "Künstlerische Projekte", emoji: "🎭" },
-    { id: "ctx_3", title: "Organisation & Tools", emoji: "🛠️" },
-    { id: "ctx_4", title: "Persönliche Entwicklung", emoji: "🧠" },
-  ],
-  user_settings: [
-    // Einstellungen können auch statisch bleiben
-    {
-      user_id: "user_123",
-      daily_task_goal: 5,
-      daily_pomodoro_goal: 8,
-      pomodoro_work_duration: 25,
-      // ... (restliche Einstellungen)
-    },
-  ],
+// Assuming a global showToast function exists for user feedback.
+// function showToast(message, duration = 3000) { ... }
 
-  /**
-   * Initialisiert die Datenbank, indem alle Daten vom Backend geladen werden.
-   * Muss beim Start der App aufgerufen werden.
-   */
-  async initialize() {
-    console.log("Initialisiere Datenbank und lade Daten vom Backend...");
-    // Führt die API-Aufrufe parallel aus und wartet, bis beide fertig sind
-    const [projects, tasks] = await Promise.all([
-      api.getProjects(),
-      api.getTasks(),
-    ]);
+const database = (() => {
+    // --- Private State ---
+    const _cache = {
+        projects: [],
+        tasks: [],
+        contexts: [],
+        user_settings: {}
+    };
 
-    this.projects = projects;
-    this.tasks = tasks;
+    const _api = {
+        baseUrl: 'http://localhost:3000/api',
 
-    console.log("Datenbank initialisiert:", {
-      projects: this.projects,
-      tasks: this.tasks,
-    });
-  },
+        /**
+         * Generic fetch wrapper for API requests.
+         * @param {string} endpoint - The API endpoint (e.g., '/tasks').
+         * @param {object} [options={}] - Fetch options (method, headers, body).
+         * @returns {Promise<any>} The JSON response from the server.
+         */
+        async request(endpoint, options = {}) {
+            const url = this.baseUrl + endpoint;
+            const config = {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+            };
 
-  // =====================================================================
-  // FIX: addTask-Funktion wieder hinzugefügt, um den Fehler zu beheben
-  // =====================================================================
-  addTask: function (taskData) {
-    try {
-      if (!taskData || !taskData.text)
-        throw new Error("Task data or text is missing.");
+            if (options.body) {
+                config.body = JSON.stringify(options.body);
+            }
 
-      const newTask = {
-        id: `task_${Date.now()}`,
-        userId: "user_123",
-        projectId: taskData.projectId || null,
-        text: taskData.text,
-        completed: false,
-        created_at: new Date().toISOString(),
-      };
-      this.tasks.push(newTask);
-      console.log(
-        `Aufgabe "${newTask.text}" lokal hinzugefügt. HINWEIS: Noch nicht im Backend gespeichert.`
-      );
-      return newTask;
-    } catch (error) {
-      console.error("Fehler beim lokalen Hinzufügen der Aufgabe:", error);
-      return null;
-    }
-  },
+            try {
+                const response = await fetch(url, config);
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: response.statusText }));
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+                // Handle responses with no content (e.g., DELETE)
+                if (response.status === 204) {
+                    return null;
+                }
+                return response.json();
+            } catch (error) {
+                console.error(`API request failed for ${options.method || 'GET'} ${endpoint}:`, error);
+                throw error;
+            }
+        }
+    };
 
-  // --- DATENZUGRIFFS-FUNKTIONEN (greifen jetzt auf den Cache zu) ---
+    // --- Public API ---
+    const publicApi = {
+        /**
+         * Initializes the local cache by fetching all projects and tasks from the backend.
+         * @returns {Promise<boolean>} True if initialization was successful, false otherwise.
+         */
+        async initialize() {
+            try {
+                const [projects, tasks] = await Promise.all([
+                    _api.request('/projects'),
+                    _api.request('/tasks')
+                ]);
+                _cache.projects = projects || [];
+                _cache.tasks = tasks || [];
+                console.log('Database initialized successfully.');
+                return true;
+            } catch (error) {
+                console.error('Failed to initialize database:', error);
+                showToast('Error: Could not load data from server.');
+                return false;
+            }
+        },
 
-  getActiveProjects: function () {
-    // Die Funktion bleibt gleich, greift aber auf die geladenen Daten zu
-    return this.projects.filter((p) => p.status === "active");
-  },
+        // --- Task Methods ---
 
-  getTasksByProjectId: function (projectId) {
-    return this.tasks.filter((t) => t.projectId === projectId);
-  },
+        /**
+         * Adds a new task by sending it to the backend and then adding the response to the cache.
+         * @param {object} taskData - The data for the new task.
+         * @returns {Promise<object|null>} The newly created task or null on failure.
+         */
+        async addTask(taskData) {
+            try {
+                const newTask = await _api.request('/tasks', { method: 'POST', body: taskData });
+                _cache.tasks.push(newTask);
+                return newTask;
+            } catch (error) {
+                showToast('Error: Could not create task.');
+                return null;
+            }
+        },
 
-  getProjectById: function (projectId) {
-    return this.projects.find((p) => p.id === projectId);
-  },
+        /**
+         * Updates a task using an optimistic approach.
+         * @param {string|number} taskId - The ID of the task to update.
+         * @param {object} updateData - An object with the properties to update.
+         * @returns {Promise<object|null>} The updated task or null on failure.
+         */
+        async updateTask(taskId, updateData) {
+            const taskIndex = _cache.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return null;
 
-  calculateProjectProgress: function (projectId) {
-    const projectTasks = this.getTasksByProjectId(projectId);
-    if (!projectTasks || projectTasks.length === 0) return 0;
-    const totalTasks = projectTasks.length;
-    const completedTasks = projectTasks.filter((task) => task.completed).length;
-    return Math.round((completedTasks / totalTasks) * 100);
-  },
+            const originalTask = { ..._cache.tasks[taskIndex] };
+            const updatedTask = { ...originalTask, ...updateData };
 
-  getContextById: function (contextId) {
-    if (!contextId) return undefined;
-    return this.contexts.find((c) => c.id === contextId);
-  },
+            // Optimistic update
+            _cache.tasks[taskIndex] = updatedTask;
 
-  getUserSettings: function (userId = "user_123") {
-    return this.user_settings.find((s) => s.user_id === userId);
-  },
+            try {
+                // The backend response is the source of truth after update
+                const savedTask = await _api.request(`/tasks/${taskId}`, { method: 'PUT', body: updateData });
+                _cache.tasks[taskIndex] = savedTask; // Sync with server response
+                return savedTask;
+            } catch (error) {
+                // Rollback on failure
+                _cache.tasks[taskIndex] = originalTask;
+                showToast('Error: Could not update task.');
+                // Notify UI to re-render with rolled-back data
+                document.dispatchEvent(new CustomEvent('data-changed'));
+                return null;
+            }
+        },
 
-  getTodayTasks: function () {
-    const today = new Date().toISOString().slice(0, 10);
-    return this.tasks.filter((t) => t.scheduled_at === today);
-  },
-  getInboxTasks: function () {
-    return this.tasks.filter(
-      (t) =>
-        t.projectId === null &&
-        !t.completed &&
-        t.scheduled_at === null &&
-        !t.isHabit
-    );
-  },
-  toggleTaskCompleted: function (taskId) {
-    const task = this.tasks.find((t) => t.id === taskId);
-    if (task) {
-      task.completed = !task.completed;
-      console.log(
-        `Task ${taskId} status changed to ${task.completed}. (Änderung nur lokal)`
-      );
-      return true;
-    }
-    return false;
-  },
-};
+        /**
+         * Deletes a task using an optimistic approach.
+         * @param {string|number} taskId - The ID of the task to delete.
+         * @returns {Promise<boolean>} True on success, false on failure.
+         */
+        async deleteTask(taskId) {
+            const taskIndex = _cache.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex === -1) return false;
+
+            const deletedTask = _cache.tasks[taskIndex];
+            
+            // Optimistic deletion
+            _cache.tasks.splice(taskIndex, 1);
+
+            try {
+                await _api.request(`/tasks/${taskId}`, { method: 'DELETE' });
+                return true;
+            } catch (error) {
+                // Rollback on failure
+                _cache.tasks.splice(taskIndex, 0, deletedTask);
+                showToast('Error: Could not delete task.');
+                // Notify UI to re-render with rolled-back data
+                document.dispatchEvent(new CustomEvent('data-changed'));
+                return false;
+            }
+        },
+
+        /**
+         * Toggles the completion status of a task.
+         * @param {string|number} taskId - The ID of the task.
+         * @returns {Promise<object|null>} The updated task or null.
+         */
+        toggleTaskCompleted(taskId) {
+            const task = this.getTaskById(taskId);
+            if (!task) return Promise.resolve(null);
+            return this.updateTask(taskId, { completed: !task.completed });
+        },
+
+        // --- Project Methods ---
+
+        /**
+         * Adds a new project.
+         * @param {object} projectData - Data for the new project.
+         * @returns {Promise<object|null>} The newly created project or null on failure.
+         */
+        async addProject(projectData) {
+            try {
+                const newProject = await _api.request('/projects', { method: 'POST', body: projectData });
+                _cache.projects.push(newProject);
+                return newProject;
+            } catch (error) {
+                showToast('Error: Could not create project.');
+                return null;
+            }
+        },
+
+        // --- Getter Functions (operating on the local cache) ---
+
+        getTasks: () => _cache.tasks,
+        getProjects: () => _cache.projects,
+        getTaskById: (id) => _cache.tasks.find(t => t.id === id),
+        getProjectById: (id) => _cache.projects.find(p => p.id === id),
+        getActiveProjects: () => _cache.projects.filter(p => !p.archived),
+        getTasksByProjectId: (projectId) => _cache.tasks.filter(t => t.projectId === projectId),
+        
+        /**
+         * Gets tasks due today or overdue.
+         * @returns {Array<object>}
+         */
+        getTodayTasks() {
+            const today = new Date();
+            today.setHours(23, 59, 59, 999); // End of today
+            return _cache.tasks.filter(task => 
+                !task.completed && task.dueDate && new Date(task.dueDate) <= today
+            );
+        },
+
+        /**
+         * Gets tasks scheduled for the next 7 days.
+         * @returns {Array<object>}
+         */
+        getUpcomingTasks() {
+            const today = new Date();
+            const nextWeek = new Date();
+            nextWeek.setDate(today.getDate() + 7);
+            today.setHours(0, 0, 0, 0); // Start of today
+
+            return _cache.tasks.filter(task => {
+                if (task.completed || !task.dueDate) return false;
+                const dueDate = new Date(task.dueDate);
+                return dueDate >= today && dueDate <= nextWeek;
+            });
+        }
+    };
+
+    return publicApi;
+})();
