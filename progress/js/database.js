@@ -40,7 +40,7 @@ const database = (() => {
             if (options.body) {
                 config.body = JSON.stringify(options.body);
             }
-
+            console.log("Sending request:", url, config);
             try {
                 const response = await fetch(url, config);
                 if (!response.ok) {
@@ -73,6 +73,12 @@ const database = (() => {
                 ]);
                 _cache.projects = projects || [];
                 _cache.tasks = tasks || [];
+
+                if (_cache.projects.length === 0 && _cache.tasks.length === 0) {
+                    console.log("No data from backend, populating with mock data.");
+                    this._addMockData();
+                }
+
                 console.log('Database initialized successfully.');
                 return true;
             } catch (error) {
@@ -80,6 +86,40 @@ const database = (() => {
                 showToast('Error: Could not load data from server.');
                 return false;
             }
+        },
+
+        _addMockData() {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const lastWeek = new Date(today);
+            lastWeek.setDate(today.getDate() - 7);
+            const lastMonth = new Date(today);
+            lastMonth.setMonth(today.getMonth() - 1);
+            const lastYear = new Date(today);
+            lastYear.setFullYear(today.getFullYear() - 1);
+
+            _cache.projects = [
+                { id: 'proj_1', title: 'Marathon-Training', status: 'active' },
+                { id: 'proj_2', title: 'Website-Relaunch', status: 'active' },
+                { id: 'proj_3', title: 'Buch schreiben', status: 'archived' },
+            ];
+
+            _cache.tasks = [
+                // Project 1
+                { id: 'task_1', text: 'Laufschuhe kaufen', projectId: 'proj_1', completed: true, completed_at: yesterday.toISOString() },
+                { id: 'task_2', text: '10km laufen', projectId: 'proj_1', completed: true, completed_at: lastWeek.toISOString() },
+                { id: 'task_3', text: 'Trainingsplan erstellen', projectId: 'proj_1', completed: false },
+                // Project 2
+                { id: 'task_4', text: 'Design-Mockup erstellen', projectId: 'proj_2', completed: true, completed_at: lastMonth.toISOString() },
+                { id: 'task_5', text: 'Frontend entwickeln', projectId: 'proj_2', completed: false },
+                // Completed tasks from last year
+                { id: 'task_6', text: 'Altes Projekt abschließen', projectId: 'proj_3', completed: true, completed_at: lastYear.toISOString() },
+                // Inbox tasks
+                { id: 'task_7', text: 'Steuererklärung machen', projectId: null, completed: false },
+                // Habit
+                { id: 'task_8', text: 'Täglich 15 Minuten lesen', projectId: null, completed: false, isHabit: true, streak: 5 },
+            ];
         },
 
         // --- Task Methods ---
@@ -119,12 +159,6 @@ const database = (() => {
             try {
                 const savedTask = await _api.request(`/tasks/${taskId}`, { method: 'PUT', body: updateData });
                 _cache.tasks[taskIndex] = savedTask; // Sync with server response
-
-                // Streak-Logik für Gewohnheiten
-                if (savedTask.completed && originalTask.habitOriginId) {
-                    await this.incrementHabitStreak(originalTask.habitOriginId);
-                }
-
                 return savedTask;
             } catch (error) {
                 _cache.tasks[taskIndex] = originalTask; // Rollback
@@ -169,7 +203,14 @@ const database = (() => {
         toggleTaskCompleted(taskId) {
             const task = this.getTaskById(taskId);
             if (!task) return Promise.resolve(null);
-            return this.updateTask(taskId, { completed: !task.completed });
+
+            const updateData = { completed: !task.completed };
+            if (task.isHabit && !task.completed) { // if completing a habit
+                updateData.streak = (task.streak || 0) + 1;
+            }
+            // Not resetting streak on un-completion for now.
+
+            return this.updateTask(taskId, updateData);
         },
 
         // --- Project Methods ---
@@ -216,7 +257,9 @@ const database = (() => {
         getProjectById: (id) => _cache.projects.find(p => p.id === id),
         getActiveProjects: () => _cache.projects.filter(p => p.status === 'active'),
         getTasksByProjectId: (projectId) => _cache.tasks.filter(t => t.projectId === projectId),
-        getInboxTasks: () => _cache.tasks.filter(t => !t.projectId),
+        getInboxTasks: () => _cache.tasks.filter(t => 
+            !t.projectId && !t.scheduled_at && !t.delegated_to && !t.isHabit && !t.completed
+        ),
         
         /**
          * Gets tasks scheduled for today.
@@ -224,9 +267,12 @@ const database = (() => {
          */
         getTodayTasks() {
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            return _cache.tasks.filter(task => 
+            console.log("Filtering tasks for today:", today);
+            const filteredTasks = _cache.tasks.filter(task => 
                 !task.completed && task.scheduled_at && task.scheduled_at.startsWith(today)
             );
+            console.log("Today's tasks found:", filteredTasks);
+            return filteredTasks;
         },
 
         /**

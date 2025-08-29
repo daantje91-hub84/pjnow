@@ -153,12 +153,12 @@
                   <ul id="backlinks-list" class="mb-6"></ul>
                   <button
                     id="process-note-btn"
-                    class="font-button w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition-colors text-base tracking-wider flex items-center justify-center gap-2 hidden"
+                    class="font-button w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition-colors text-base tracking-wider flex items-center justify-center gap-2"
                   >
                     <span class="material-icons" style="font-size: 20px"
-                      >auto_awesome</span
+                      >arrow_upward</span
                     >
-                    Mit KI verarbeiten
+                    Als Aufgabe an Progress senden
                   </button>
                   <button
                     id="find-connections-btn"
@@ -261,5 +261,12 @@
     </div>
 
     <script src="app.js"></script>
+
+    <div id="context-menu" class="hidden absolute bg-gray-700 border border-gray-600 rounded-md shadow-lg py-2 z-50">
+        <a href="#" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600" data-action="copy">Kopieren</a>
+        <a href="#" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600" data-action="paste">Einfügen</a>
+        <hr class="border-gray-600 my-1">
+        <a href="#" class="block px-4 py-2 text-sm text-gray-200 hover:bg-gray-600" data-action="promote-to-task">An Progress senden</a>
+    </div>
   </body>
 </html>

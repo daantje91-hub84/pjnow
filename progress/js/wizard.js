@@ -35,7 +35,7 @@ async function startProjectWizard() {
 
 function initializeWizard() {
     newProjectData = {
-        goal: null, context_id: null, wizardType: null, milestones: []
+        goal: null, context_id: null, wizardType: null, milestones: [], aiPlan: null
     };
 
     let wizardStep = 0;
@@ -43,29 +43,51 @@ function initializeWizard() {
 
     const wizardModal = document.getElementById('wizard-modal');
     if (!wizardModal) return;
+    const footer = wizardModal.querySelector('.wizard-nav');
 
     function updateWizardUI() {
         const progressContainer = wizardModal.querySelector('.progress-bar');
-        const progressLabel = wizardModal.querySelector('#progress-label');
-        const progressFill = wizardModal.querySelector('#progress-fill');
-        const prevButton = wizardModal.querySelector('#prev-button');
-        const nextButton = wizardModal.querySelector('#next-button');
+        const prevButtonHTML = `<button type="button" id="prev-button" class="button-wizard secondary"><span class="material-icons">arrow_back</span><span>Zurück</span></button>`;
+        const nextButtonHTML = `<button type="button" id="next-button" class="button-wizard"><span>Weiter</span><span class="material-icons">arrow_forward</span></button>`;
         
+        // Reset footer and hide all steps
+        footer.innerHTML = '';
         wizardModal.querySelectorAll('.wizard-step').forEach(step => step.classList.add('hidden'));
-        
-        // Logik zur Anzeige der Schritte basierend auf dem Wizard-Typ
-        if (newProjectData.wizardType === 'ai') {
-            progressContainer.style.display = 'none'; // Keine Schritte für KI
-            wizardModal.querySelector(`#step-1`).classList.remove('hidden'); // Nur Zieleingabe
+
+        if (wizardStep === 'ai-feedback') {
+            progressContainer.style.display = 'none';
+            wizardModal.querySelector(`#step-ai-feedback`).classList.remove('hidden');
+            
+            // Add Discard and Accept buttons
+            footer.innerHTML = `
+                <button type="button" id="discard-ai-plan" class="button-wizard secondary"><span class="material-icons">close</span><span>Verwerfen</span></button>
+                <button type="button" id="accept-ai-plan" class="button-wizard"><span class="material-icons">check</span><span>Akzeptieren & Erstellen</span></button>
+            `;
+            wizardModal.querySelector('#discard-ai-plan').addEventListener('click', closeWizard);
+            wizardModal.querySelector('#accept-ai-plan').addEventListener('click', saveAiProject);
+
+        } else if (newProjectData.wizardType === 'ai') {
+            progressContainer.style.display = 'none';
+            wizardModal.querySelector(`#step-1`).classList.remove('hidden');
+            footer.innerHTML = nextButtonHTML;
         } else {
             progressContainer.style.display = 'block';
             wizardModal.querySelector(`#step-${wizardStep}`)?.classList.remove('hidden');
+            footer.innerHTML = prevButtonHTML + nextButtonHTML;
         }
 
+        const progressLabel = wizardModal.querySelector('#progress-label');
+        const progressFill = wizardModal.querySelector('#progress-fill');
         if (progressLabel) progressLabel.textContent = `Schritt ${wizardStep + 1} von ${totalSteps}`;
         if (progressFill) progressFill.style.width = `${((wizardStep + 1) / totalSteps) * 100}%`;
-        if (prevButton) prevButton.classList.toggle('hidden', wizardStep === 0 || newProjectData.wizardType === 'ai');
         
+        const prevButton = wizardModal.querySelector('#prev-button');
+        if (prevButton) {
+            prevButton.classList.toggle('hidden', wizardStep === 0);
+            prevButton.addEventListener('click', prevStep);
+        }
+
+        const nextButton = wizardModal.querySelector('#next-button');
         if (nextButton) {
             let isEnabled = false;
             let buttonText = "Weiter";
@@ -89,6 +111,7 @@ function initializeWizard() {
             }
             nextButton.disabled = !isEnabled;
             nextButton.innerHTML = `<span>${buttonText}</span><span class="material-icons">${buttonIcon}</span>`;
+            nextButton.addEventListener('click', nextStep);
         }
     }
     
@@ -132,11 +155,9 @@ function initializeWizard() {
 
     // --- Event Listeners ---
     wizardModal.querySelector('#close-wizard-btn')?.addEventListener('click', closeWizard);
-    wizardModal.querySelector('#prev-button')?.addEventListener('click', prevStep);
-    wizardModal.querySelector('#next-button')?.addEventListener('click', nextStep);
     wizardModal.querySelector('#add-milestone-btn')?.addEventListener('click', addMilestoneInput);
 
-    wizardModal.querySelector('#milestones-container')?.addEventListener('click', (e) => {
+    wizardModal.querySelector('#milestones-container, #ai-plan-container')?.addEventListener('click', (e) => {
         if (e.target.closest('.remove-milestone-btn')) {
             e.target.closest('.milestone-input-group').remove();
         }
@@ -220,28 +241,65 @@ async function createProjectWithAI() {
 
     showToast('🤖 KI analysiert dein Ziel und erstellt einen Plan...');
     const aiResult = await database.processGoalWithAI(newProjectData.goal);
-    closeWizard();
-
+    
     if (aiResult && aiResult.id) {
-        // Annahme: Die KI gibt ein Projekt-ähnliches Objekt zurück.
-        // Wir erstellen das Projekt und die zugehörigen Aufgaben.
-        const projectToCreate = { title: aiResult.id };
-        const newProject = await database.addProject(projectToCreate);
-
-        if (newProject && aiResult.tasks && aiResult.tasks.length > 0) {
-            for (const task of aiResult.tasks) {
-                await database.addTask({ text: task.text, projectId: newProject.id });
-            }
-            showToast('✅ KI-Projekt und Aufgaben erfolgreich erstellt!');
-            navigateTo('project-detail-content', { projectId: newProject.id });
-        } else if (newProject) {
-            showToast('✅ KI-Projekt erfolgreich erstellt!');
-            navigateTo('project-detail-content', { projectId: newProject.id });
-        } else {
-            showToast('❌ Fehler beim Speichern des KI-Projekts.');
-        }
+        newProjectData.aiPlan = aiResult;
+        wizardStep = 'ai-feedback'; // Set a special step name
+        updateWizardUI();
+        renderAiFeedback(aiResult);
     } else {
         showToast('❌ Die KI konnte keinen Plan für dieses Ziel erstellen.');
+        closeWizard();
+    }
+}
+
+function renderAiFeedback(plan) {
+    const container = document.getElementById('ai-plan-container');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="input-group">
+            <label for="ai-project-title">Projekttitel</label>
+            <input type="text" id="ai-project-title" class="wizard-input" value="${plan.id}">
+        </div>
+        <div class="input-group" style="margin-top: 16px;">
+            <label>Aufgaben</label>
+            <div id="ai-tasks-list" class="milestones-input-container">
+                ${plan.tasks.map(task => `
+                    <div class="milestone-input-group">
+                        <input type="text" class="milestone-input ai-task-input" value="${task.text}">
+                        <button type="button" class="button-icon remove-milestone-btn" title="Entfernen">
+                            <span class="material-icons">delete_outline</span>
+                        </button>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+async function saveAiProject() {
+    const newTitle = document.getElementById('ai-project-title').value;
+    const taskInputs = document.querySelectorAll('.ai-task-input');
+    const tasks = Array.from(taskInputs).map(input => ({ text: input.value.trim() })).filter(task => task.text);
+
+    if (!newTitle || tasks.length === 0) {
+        showToast('❌ Bitte gib einen Titel und mindestens eine Aufgabe an.');
+        return;
+    }
+
+    const projectToCreate = { title: newTitle };
+    const newProject = await database.addProject(projectToCreate);
+
+    if (newProject) {
+        for (const task of tasks) {
+            await database.addTask({ text: task.text, projectId: newProject.id });
+        }
+        showToast('✅ KI-Projekt und Aufgaben erfolgreich erstellt!');
+        closeWizard();
+        navigateTo('project-detail-content', { projectId: newProject.id });
+    } else {
+        showToast('❌ Fehler beim Speichern des KI-Projekts.');
     }
 }
 
@@ -258,7 +316,7 @@ function closeGtdWizard() {
     gtdWizardState = {}; // Zustand zurücksetzen
 }
 
-async function startGtdWizard(taskId) {
+async function startGtdWizard(taskId, initialStartTime = null) {
     closeWizard(); // Sicherstellen, dass keine anderen Wizards offen sind
     closeGtdWizard(); // Sicherstellen, dass der GTD-Wizard nicht doppelt offen ist
 
@@ -276,8 +334,8 @@ async function startGtdWizard(taskId) {
         currentTaskText: task.text, // Der Text, der im Wizard bearbeitet wird
         projectId: task.projectId, // Falls schon einem Projekt zugeordnet
         delegatedTo: null,
-        deadline: null,
-        startTime: null,
+        deadline: new Date().toISOString().split('T')[0], // Set default to today
+        startTime: initialStartTime || null,
         isNewProject: false, // Flag, ob ein neues Projekt erstellt wird
         selectedProjectId: null, // Das ausgewählte Projekt im Schritt 5
     };
@@ -332,24 +390,40 @@ async function handleGtdWizardAction(e) {
             gtdWizardState.currentStep = 2;
             break;
         case 'is_note':
-            await database.updateTask(gtdWizardState.taskId, { isNote: true, projectId: null, scheduled_at: null });
-            showToast("Eintrag als Notiz gespeichert.");
-            closeGtdWizard();
-            renderInbox();
+            try {
+                const noteTitle = gtdWizardState.originalTaskText; // Use original task text as note title
+                const noteContent = gtdWizardState.originalTaskText; // Use original task text as note content
+                const response = await fetch('http://localhost:3000/api/create-shared-note', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: noteTitle, content: noteContent })
+                });
+                if (response.ok) {
+                    showToast("Eintrag als Notiz in Now erstellt.");
+                    // Do not delete from Progress inbox, just update its status
+                    await database.updateTask(gtdWizardState.taskId, { isNote: true, projectId: null, scheduled_at: null, delegated_to: null });
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Unbekannter Fehler");
+                }
+            } catch (error) {
+                console.error("Fehler beim Erstellen der Notiz in Now:", error);
+                showToast(`Fehler: ${error.message}. Konnte Notiz nicht in Now erstellen.`);
+            }
+            processNextInboxTask(); // Process next inbox task
             return;
         case 'is_trash':
             if (confirm(`Möchtest du "${gtdWizardState.originalTaskText}" wirklich löschen?`)) {
                 await database.deleteTask(gtdWizardState.taskId);
                 showToast("Eintrag gelöscht.");
-                closeGtdWizard();
-                renderInbox();
+                processNextInboxTask(); // Process next inbox task
             }
             return;
         case 'do_it_now':
             await database.updateTask(gtdWizardState.taskId, { completed: true, scheduled_at: new Date().toISOString().slice(0, 10) });
             showToast("Aufgabe sofort erledigt!");
-            closeGtdWizard();
-            renderInbox();
+            // Do not delete from inbox, it's completed and will be filtered out
+            processNextInboxTask(); // Process next inbox task
             return;
         case 'defer_or_delegate':
             gtdWizardState.currentStep = 4;
@@ -369,7 +443,7 @@ async function handleGtdWizardAction(e) {
                 gtdWizardState.selectedProjectId = newProject.id;
                 await database.updateTask(gtdWizardState.taskId, { projectId: newProject.id });
                 showToast(`Projekt "${newProject.title}" erstellt und Aufgabe zugewiesen.`);
-                gtdWizardState.currentStep = 6; // Gehe direkt zum Terminieren
+                gtdWizardState.currentStep = 7; // Gehe direkt zum Terminieren-Schritt
             } else {
                 showToast('Fehler beim Erstellen des Projekts.');
                 // Bleibe im aktuellen Schritt oder gehe zurück
@@ -412,6 +486,11 @@ async function finishGtdWizard() {
         completed: false // Standardmäßig nicht erledigt beim Planen
     };
 
+    // If a deadline is set, assume it's scheduled for that day
+    if (updateData.deadline) {
+        updateData.scheduled_at = updateData.deadline;
+    }
+
     // Wenn delegiert, aber keine Person angegeben, bleibe im Schritt
     if (gtdWizardState.currentStep === 6 && gtdWizardState.delegatedTo === null && gtdWizardModal.querySelector('#gtd-delegate-input-container').classList.contains('hidden') === false) {
         showToast('Bitte gib an, an wen du delegierst.');
@@ -420,15 +499,28 @@ async function finishGtdWizard() {
 
     await database.updateTask(gtdWizardState.taskId, updateData);
     showToast('Aufgabe erfolgreich geplant!');
-    closeGtdWizard();
-    renderInbox(); // Inbox neu laden
-    navigateTo('today-content'); // Oder zur Today-Ansicht navigieren
+
+    const remainingInboxTasks = database.getInboxTasks();
+    if (remainingInboxTasks.length > 0) {
+        startGtdWizard(remainingInboxTasks[0].id); // Start wizard for next task
+    } else {
+        closeGtdWizard();
+        renderInbox(); // Re-render inbox to show it's empty
+        showToast("Inbox erfolgreich verarbeitet! Alle Einträge erledigt.");
+        navigateTo('today-content'); // Navigate to today view after processing all
+    }
 }
 
 function updateGtdWizardUI() {
     const currentStepEl = gtdWizardModal.querySelector(`#gtd-step-${gtdWizardState.currentStep}`);
     gtdWizardModal.querySelectorAll('.wizard-step').forEach(step => step.classList.add('hidden'));
     if (currentStepEl) currentStepEl.classList.remove('hidden');
+
+    // Display current task text in step 1
+    const gtdCurrentTaskTextSpan = gtdWizardModal.querySelector('#gtd-current-task-text');
+    if (gtdCurrentTaskTextSpan) {
+        gtdCurrentTaskTextSpan.textContent = gtdWizardState.originalTaskText;
+    }
 
     const prevButton = gtdWizardModal.querySelector('#gtd-prev-button');
     const nextButton = gtdWizardModal.querySelector('#gtd-next-button');
@@ -489,6 +581,18 @@ async function populateProjectList() {
         `).join('');
     } else {
         container.innerHTML = '<p>Du hast noch keine aktiven Projekte.</p>';
+    }
+}
+
+async function processNextInboxTask() {
+    const remainingInboxTasks = database.getInboxTasks();
+    if (remainingInboxTasks.length > 0) {
+        startGtdWizard(remainingInboxTasks[0].id); // Start wizard for next task
+    } else {
+        closeGtdWizard();
+        renderInbox(); // Re-render inbox to show it's empty
+        showToast("Inbox erfolgreich verarbeitet! Alle Einträge erledigt.");
+        navigateTo('today-content'); // Navigate to today view after processing all
     }
 }
 

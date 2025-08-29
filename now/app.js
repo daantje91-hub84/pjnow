@@ -291,7 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const renderMetadataView = (metadata) => {
     metadataContainer.innerHTML = "";
-    if (!metadata) return;
+    if (!metadata) metadata = {};
 
     for (const key in metadata) {
       const value = metadata[key];
@@ -308,10 +308,22 @@ document.addEventListener("DOMContentLoaded", () => {
       valueInput.value = value;
       valueInput.dataset.key = key;
 
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "button-icon remove-metadata-btn";
+      deleteBtn.innerHTML = `<span class="material-icons">delete_outline</span>`;
+      deleteBtn.dataset.key = key;
+
       itemDiv.appendChild(keyLabel);
       itemDiv.appendChild(valueInput);
+      itemDiv.appendChild(deleteBtn);
       metadataContainer.appendChild(itemDiv);
     }
+
+    const addBtn = document.createElement("button");
+    addBtn.id = "add-metadata-btn";
+    addBtn.className = "button-cta";
+    addBtn.textContent = "Metadaten hinzufügen";
+    metadataContainer.appendChild(addBtn);
   };
 
   const renderProjectsView = () => {
@@ -753,7 +765,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }, 1000);
 
   splashScreen.addEventListener("click", () => {
-    splashScreen.classList.add("hidden");
+    splashScreen.classList.add("opacity-0");
+    setTimeout(() => {
+        splashScreen.classList.add("hidden");
+    }, 500); // Corresponds to transition duration in CSS
+
     // KORREKTUR: Entferne 'hidden-view' anstatt 'hidden'
     appContainer.classList.remove("hidden-view");
     runOnboardingOrInit();
@@ -795,8 +811,83 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  metadataContainer.addEventListener('click', async (e) => {
+      const addBtn = e.target.closest('#add-metadata-btn');
+      const deleteBtn = e.target.closest('.remove-metadata-btn');
+
+      if (addBtn) {
+          const key = prompt("Name des Metadaten-Feldes:");
+          if (key) {
+              const note = notes.find(n => n.id === activeNoteId);
+              if (note) {
+                  if (!note.metadata) note.metadata = {};
+                  note.metadata[key.toLowerCase()] = ""; // Add with empty value
+                  await saveNote();
+                  renderMetadataView(note.metadata);
+              }
+          }
+      } else if (deleteBtn) {
+          const key = deleteBtn.dataset.key;
+          const note = notes.find(n => n.id === activeNoteId);
+          if (note && note.metadata) {
+              delete note.metadata[key];
+              await saveNote();
+              renderMetadataView(note.metadata);
+          }
+      }
+  });
+
   metadataContainer.addEventListener("change", async () => {
     await saveNote();
     await loadNotes();
+  });
+
+  const contextMenu = document.getElementById('context-menu');
+  noteContentInput.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      contextMenu.style.top = `${e.clientY}px`;
+      contextMenu.style.left = `${e.clientX}px`;
+      contextMenu.classList.remove('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+      if (!contextMenu.contains(e.target)) {
+          contextMenu.classList.add('hidden');
+      }
+  });
+
+  contextMenu.addEventListener('click', (e) => {
+      e.preventDefault();
+      const action = e.target.dataset.action;
+      if (action === 'promote-to-task') {
+          processNoteBtn.click(); // Simulate click on the existing button
+      }
+      contextMenu.classList.add('hidden');
+  });
+
+  processNoteBtn.addEventListener("click", async () => {
+    const noteTitle = noteTitleInput.value;
+    if (!noteTitle) {
+      alert("Bitte geben Sie der Notiz einen Titel, bevor Sie sie an Progress senden.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:3000/api/promote-note-to-task", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: noteTitle }),
+      });
+
+      if (response.ok) {
+        alert(`Die Aufgabe "${noteTitle}" wurde erfolgreich an die Progress Inbox gesendet.`);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Unbekannter Fehler");
+      }
+    } catch (error) {
+      console.error("Fehler beim Senden der Aufgabe an Progress:", error);
+      alert(`Fehler: ${error.message}. Läuft das Backend auf Port 3000?`);
+    }
   });
 });

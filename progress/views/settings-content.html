@@ -4,84 +4,96 @@
     </div>
 </div>
 <div class="settings-container">
-    <section class="settings-section">
-        <h2>Profil</h2>
-        <div class="profile-card">
-            <div class="profile-avatar"><span class="material-icons">account_circle</span></div>
-            <div class="profile-info">
-                <span class="profile-name" id="profile-name">Max Mustermann</span>
-                <span class="profile-email" id="profile-email">max.mustermann@email.com</span>
-            </div>
-            <button class="button-icon">Bearbeiten</button>
-        </div>
-    </section>
+    <div class="tabs">
+        <button class="tab-link active" data-tab="tab-general">Allgemein</button>
+        <button class="tab-link" data-tab="tab-planning">Planung</button>
+        <button class="tab-link" data-tab="tab-account">Konto</button>
+    </div>
 
-    <section class="settings-section">
-        <h2>Tagesziele</h2>
-        <div class="setting-item">
-            <label for="daily-tasks-goal">Aufgaben pro Tag</label>
-            <input type="number" class="setting-input" id="daily-tasks-goal" min="1" data-setting="daily_task_goal">
-        </div>
-        <div class="setting-item">
-            <label for="daily-pomodoros-goal">Pomodoros pro Tag</label>
-            <input type="number" class="setting-input" id="daily-pomodoros-goal" min="1" data-setting="daily_pomodoro_goal">
-        </div>
-    </section>
-    
-    <!-- ANGEPASSTER ABSCHNITT: POMODORO TIMER -->
-    <section class="settings-section">
-        <h2>Pomodoro Timer</h2>
-        <div class="setting-item">
-            <label for="work-duration">Arbeitsintervall (Minuten)</label>
-            <input type="number" class="setting-input" id="work-duration" data-setting="pomodoro_work_duration">
-        </div>
-        <div class="setting-item">
-            <label for="short-break">Kurze Pause (Minuten)</label>
-            <input type="number" class="setting-input" id="short-break" data-setting="pomodoro_short_break">
-        </div>
-    </section>
-
-    <section class="settings-section">
-        <h2>Wöchentliche Ruhetage</h2>
-        <p class="setting-description">Aufgaben werden an diesen Tagen nicht automatisch geplant.</p>
-        <div class="day-picker-container" id="rest-day-picker">
-            <div class="day-toggle" data-day="1">Mo</div>
-            <div class="day-toggle" data-day="2">Di</div>
-            <div class="day-toggle" data-day="3">Mi</div>
-            <div class="day-toggle" data-day="4">Do</div>
-            <div class="day-toggle" data-day="5">Fr</div>
-            <div class="day-toggle" data-day="6">Sa</div>
-            <div class="day-toggle" data-day="0">So</div>
-        </div>
-    </section>
-
-    <section class="settings-section">
-        <h2>Streaks & Abwesenheit</h2>
-        <div class="setting-item">
-            <span>Urlaubsmodus</span>
-            <div class="toggle-switch">
-                <input type="checkbox" id="vacation-mode-toggle" class="toggle-input" data-setting="vacation_mode_active">
-                <label for="vacation-mode-toggle" class="toggle-label"></label>
+    <div id="tab-general" class="tab-content active">
+        <section class="settings-section">
+            <h2>Profil</h2>
+            <div class="profile-card">
+                <div class="profile-avatar"><span class="material-icons">account_circle</span></div>
+                <div class="profile-info">
+                    <span class="profile-name" id="profile-name">Max Mustermann</span>
+                    <span class="profile-email" id="profile-email">max.mustermann@email.com</span>
+                </div>
+                <button class="button-icon">Bearbeiten</button>
             </div>
-        </div>
-        <div id="vacation-dates-container" class="hidden" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-             <div class="setting-item">
-                <label for="vacation-start">Beginn</label>
-                <input type="date" class="setting-input" id="vacation-start" data-setting="vacation_start_date">
+        </section>
+        <section class="settings-section">
+            <h2>Pomodoro Timer</h2>
+            <div class="setting-item">
+                <label for="work-duration">Arbeitsintervall (Minuten)</label>
+                <input type="number" class="setting-input" id="work-duration" data-setting="pomodoro_work_duration">
             </div>
-             <div class="setting-item">
-                <label for="vacation-end">Ende</label>
-                <input type="date" class="setting-input" id="vacation-end" data-setting="vacation_end_date">
+            <div class="setting-item">
+                <label for="short-break">Kurze Pause (Minuten)</label>
+                <input type="number" class="setting-input" id="short-break" data-setting="pomodoro_short_break">
             </div>
-        </div>
-    </section>
+        </section>
+        <section class="settings-section">
+            <h2>Streaks & Abwesenheit</h2>
+            <div class="setting-item">
+                <span>Urlaubsmodus</span>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="vacation-mode-toggle" class="toggle-input" data-setting="vacation_mode_active">
+                    <label for="vacation-mode-toggle" class="toggle-label"></label>
+                </div>
+            </div>
+            <div id="vacation-dates-container" class="hidden" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+                 <div class="setting-item">
+                    <label for="vacation-start">Beginn</label>
+                    <input type="date" class="setting-input" id="vacation-start" data-setting="vacation_start_date">
+                </div>
+                 <div class="setting-item">
+                    <label for="vacation-end">Ende</label>
+                    <input type="date" class="setting-input" id="vacation-end" data-setting="vacation_end_date">
+                </div>
+            </div>
+        </section>
+    </div>
 
-    <section class="settings-section">
-        <h2>Konto</h2>
-        <div class="setting-item">
-            <a href="index.html" class="logout-link">Ausloggen</a>
-        </div>
-    </section>
+    <div id="tab-planning" class="tab-content">
+        <section class="settings-section">
+            <h2>Tagesziele</h2>
+            <div class="setting-item">
+                <label for="daily-tasks-goal">Aufgaben pro Tag</label>
+                <input type="number" class="setting-input" id="daily-tasks-goal" min="1" data-setting="daily_task_goal">
+            </div>
+            <div class="setting-item">
+                <label for="daily-pomodoros-goal">Pomodoros pro Tag</label>
+                <input type="number" class="setting-input" id="daily-pomodoros-goal" min="1" data-setting="daily_pomodoro_goal">
+            </div>
+        </section>
+        <section class="settings-section">
+            <h2>Wöchentliche Ruhetage</h2>
+            <p class="setting-description">Aufgaben werden an diesen Tagen nicht automatisch geplant.</p>
+            <div class="day-picker-container" id="rest-day-picker">
+                <div class="day-toggle" data-day="1">Mo</div>
+                <div class="day-toggle" data-day="2">Di</div>
+                <div class="day-toggle" data-day="3">Mi</div>
+                <div class="day-toggle" data-day="4">Do</div>
+                <div class="day-toggle" data-day="5">Fr</div>
+                <div class="day-toggle" data-day="6">Sa</div>
+                <div class="day-toggle" data-day="0">So</div>
+            </div>
+        </section>
+    </div>
+
+    <div id="tab-account" class="tab-content">
+        <section class="settings-section">
+            <h2>Konto</h2>
+            <div class="setting-item">
+                <a href="index.html" class="logout-link">Ausloggen</a>
+            </div>
+        </section>
+    </div>
+
+    <div class="settings-footer">
+        <button id="save-settings-btn" class="button-cta">Einstellungen speichern</button>
+    </div>
 </div>
 
 <div id="toast-notification" class="toast hidden">Einstellung gespeichert!</div>

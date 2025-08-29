@@ -4,6 +4,15 @@ const cors = require("cors");
 const { initializeDatabase } = require("./database.js");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require("path");
+const fs = require("fs");
+
+// Define shared notes directory
+const sharedNotesDir = path.join(__dirname, "shared_notes");
+
+// Ensure the directory exists
+if (!fs.existsSync(sharedNotesDir)) {
+  fs.mkdirSync(sharedNotesDir);
+}
 
 // Sicherheitsprüfung für Umgebungsvariablen
 const requiredEnvVars = ["GEMINI_API_KEY"];
@@ -128,6 +137,112 @@ app.post("/api/tasks", async (req, res) => {
   }
 });
 
+app.post("/api/promote-note-to-task", async (req, res) => {
+  const { text } = req.body;
+  if (!text) {
+    return res.status(400).json({ error: "Text for the task is required." });
+  }
+  try {
+    const db = await initializeDatabase();
+    const newId = `task_${Date.now()}`;
+    const new_created_at = new Date().toISOString();
+    await db.run(
+      "INSERT INTO tasks (id, text, projectId, created_at, isHabit, habitOriginId, streak, delegated_to, deadline, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        newId,
+        text,
+        null, // No project ID, so it goes to the inbox
+        new_created_at,
+        0,
+        null,
+        0,
+        null,
+        null,
+        null,
+      ]
+    );
+    const newTask = await db.get("SELECT * FROM tasks WHERE id = ?", newId);
+    res.status(201).json(newTask);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/inbox/promote-to-task", async (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "Inbox item ID is required." });
+  }
+  try {
+    const db = await initializeDatabase();
+    const inboxItem = await db.get("SELECT * FROM inbox WHERE id = ?", id);
+
+    if (!inboxItem) {
+      return res.status(404).json({ error: "Inbox item not found." });
+    }
+
+    // Insert into tasks table
+    const newTaskId = `task_${Date.now()}`;
+    await db.run(
+      "INSERT INTO tasks (id, text, projectId, created_at, isHabit, habitOriginId, streak, delegated_to, deadline, start_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        newTaskId,
+        inboxItem.text,
+        null, // Default to no project for promoted inbox items
+        inboxItem.created_at, // Use original created_at from inbox
+        0,
+        null,
+        0,
+        null,
+        new Date().toISOString().slice(0, 10), // Set scheduled_at to today's date
+        null,
+      ]
+    );
+
+    // Mark inbox item as trashed
+    await db.run("UPDATE inbox SET trash = 1 WHERE id = ?", id);
+
+    const newTask = await db.get("SELECT * FROM tasks WHERE id = ?", newTaskId);
+    res.status(201).json(newTask);
+  } catch (err) {
+    console.error("Error promoting inbox item to task:", err.message);
+    res.status(500).json({ error: "Failed to promote inbox item to task." });
+  }
+});
+
+app.get("/api/inbox", async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const inboxItems = await db.all("SELECT * FROM inbox WHERE trash = 0");
+    res.json(inboxItems);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/inbox/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const db = await initializeDatabase();
+    await db.run("UPDATE inbox SET trash = 1 WHERE id = ?", id);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/inbox/all", async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const inboxItems = await db.all("SELECT * FROM inbox");
+    res.json(inboxItems);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+
 app.put("/api/tasks/:id", async (req, res) => {
   const { id } = req.params;
   const { text, completed, streak, delegated_to, deadline, start_time } =
@@ -199,8 +314,29 @@ app.post("/api/process-note", async (req, res) => {
   }
 });
 
+// =====================================================================
+// API-Endpunkt für geteilte Notizen (für Now-Integration)
+// =====================================================================
+app.post("/api/create-shared-note", async (req, res) => {
+  const { title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: "Titel und Inhalt der Notiz sind erforderlich." });
+  }
+  try {
+    const filename = `${Date.now()}-${title.replace(/[^a-zA-Z0-9]/g, '_')}.md`;
+    const filePath = path.join(sharedNotesDir, filename);
+    const fileContent = `# ${title}\n\n${content}`;
+    await fs.promises.writeFile(filePath, fileContent, 'utf8');
+    res.status(200).json({ message: "Notiz erfolgreich im geteilten Ordner erstellt.", filePath });
+  } catch (error) {
+    console.error("Fehler beim Erstellen der geteilten Notiz:", error);
+    res.status(500).json({ error: "Fehler beim Erstellen der geteilten Notiz." });
+  }
+});
+
 // Server starten
 const startServer = async () => {
+
   await initializeDatabase();
   app.listen(PORT, () => {
     console.log(`Server lauscht auf http://localhost:${PORT}`);
