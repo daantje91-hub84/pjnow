@@ -1,0 +1,64 @@
+<div class="view-header">
+    <div class="view-header__title">
+        <h1>Heute</h1>
+        <p id="current-date"></p>
+    </div>
+</div>
+
+<div class="today-top-container">
+    <div class="daily-cockpit">
+        <h3>Tagesziele</h3>
+        <div class="cockpit-goals">
+            <div class="goal-stat">
+                <div class="stat-value">
+                    <span class="stat-current" id="tasks-completed-stat">0</span><span class="stat-divider">/</span><span class="stat-target" id="tasks-target-stat">0</span>
+                </div>
+                <div class="stat-label">Aufgaben</div>
+            </div>
+            <div class="goal-stat">
+                <div class="stat-value">
+                    <span class="stat-current" id="pomodoros-completed-stat">0</span><span class="stat-divider">/</span><span class="stat-target" id="pomodoros-target-stat">0</span>
+                </div>
+                <div class="stat-label">Pomodoros</div>
+            </div>
+            <div class="goal-stat">
+                <div class="stat-value" id="active-streaks-stat">🔥 0</div>
+                <div class="stat-label">Aktive Streaks</div>
+            </div>
+            <div id="cockpit-trackers-container" class="cockpit-trackers"></div>
+        </div>
+    </div>
+    
+    <div class="pomodoro-timer">
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="timer-controls">
+            <button id="start-pause-btn" class="timer-btn"><span class="material-icons">play_arrow</span> Start</button>
+            <button id="reset-btn" class="timer-btn secondary"><span class="material-icons">replay</span></button>
+        </div>
+    </div>
+</div>
+
+<div class="today-list" id="today-list">
+    <!-- Today tasks werden hier per JavaScript eingefügt -->
+</div>
+
+<style>
+.task-time {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--main-blue);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 110px; /* Feste Breite für saubere Ausrichtung */
+}
+.task-time .material-icons {
+    font-size: 18px;
+}
+.today-task-item .task-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-grow: 1; /* Nimmt den verfügbaren Platz ein */
+}
+</style>

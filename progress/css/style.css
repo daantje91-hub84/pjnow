@@ -1,0 +1,1136 @@
+/* ---
+  Progress Journal - Haupt-Stylesheet
+  --- */
+
+/* === 1. Globale Variablen & Reset === */
+:root {
+  --main-red: #E3202D;
+  --main-blue: #1223A8;
+  --text: #0b0b0b;
+  --muted: #6b6b6b;
+  --light-gray: #f0f2f5;
+  --border-color: #d9d9d9;
+  --radius: 12px;
+  --header-height: 64px;
+  --nav-height-mobile: 68px;
+  --sidenav-width-desktop: 240px;
+  --sidenav-width-collapsed: 80px;
+  --transition-speed: 0.3s;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", "Helvetica", Arial, sans-serif;
+  background: var(--light-gray);
+  color: var(--text);
+  padding-top: var(--header-height);
+}
+.app-body {
+  padding-bottom: var(--nav-height-mobile);
+}
+
+/* === 2. Layout-Helfer === */
+.screen-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.screen-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity 0.5s ease-out;
+  opacity: 1;
+}
+
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+  display: none !important;
+}
+
+/* === 3. Logo Styles === */
+.logo { display: flex; align-items: center; gap: 18px; }
+.logo__icon { width: 64px; height: 64px; min-width: 64px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--main-red), var(--main-blue)); color: #fff; box-shadow: 0 6px 16px rgba(18, 35, 168, 0.18); font-size: 32px; }
+.logo__text { display: flex; flex-direction: column; line-height: 1; }
+.logo__word-progress { font-family: "Montserrat", "Helvetica", sans-serif; font-weight: 700; font-size: 28px; letter-spacing: 1px; text-transform: uppercase; color: var(--main-blue); margin: 0; }
+.logo__word-journal { font-family: "IBM Plex Sans", "Helvetica", sans-serif; font-weight: 600; font-size: 20px; color: var(--text); margin: 2px 0 0 0; }
+.logo--stacked { flex-direction: column; align-items: center; gap: 10px; padding: 18px; }
+.logo--stacked .logo__text { align-items: center; text-align: center; }
+
+
+/* === 4. Login & Onboarding Styles === */
+.form-container { width: 100%; max-width: 360px; text-align: center; }
+.form-container h2 { font-family: 'Montserrat', sans-serif; font-size: 24px; margin-bottom: 24px; color: var(--text); }
+.form-container p { color: var(--muted); font-size: 16px; line-height: 1.5; margin-bottom: 24px; }
+.input-group { margin-bottom: 16px; text-align: left; }
+.input-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--muted); }
+.input-group input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius); font-size: 16px; font-family: "IBM Plex Sans", sans-serif; }
+.input-group input:focus { outline: none; border-color: var(--main-blue); box-shadow: 0 0 0 2px rgba(18,35,168,0.2); }
+.button { display: block; width: 100%; padding: 14px; border-radius: var(--radius); text-decoration: none; font-size: 16px; font-weight: 700; text-align: center; cursor: pointer; border: none; margin-top: 20px; }
+.button-primary { background-color: var(--main-blue); color: #fff; transition: background-color 0.2s; }
+.button-primary:hover { background-color: #1a2cb1; }
+.button-secondary { background-color: transparent; color: var(--muted); margin-top: 12px; }
+.divider { display: flex; align-items: center; text-align: center; color: var(--muted); margin: 24px 0; }
+.divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-color); }
+.divider:not(:empty)::before { margin-right: .5em; }
+.divider:not(:empty)::after { margin-left: .5em; }
+.button-social { background: #fff; color: var(--text); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; }
+.button-social img { width: 20px; height: 20px; }
+.login-footer { margin-top: 24px; font-size: 14px; color: var(--muted); }
+.login-footer a { color: var(--main-blue); font-weight: 600; text-decoration: none; }
+
+
+/* === 5. App Layout (Dashboard) === */
+.app-body {
+  padding-top: var(--header-height);
+  transition: padding-left var(--transition-speed) ease-in-out;
+}
+.app-body.sidenav-expanded { padding-left: var(--sidenav-width-desktop); }
+.app-header { display: flex; align-items: center; justify-content: space-between; padding: 0 24px; height: var(--header-height); background: #fff; border-bottom: 1px solid var(--border-color); position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
+.header-left { display: flex; align-items: center; gap: 16px; }
+.hamburger-menu { display: none; cursor: pointer; padding: 8px; margin-left: -8px; color: var(--muted); }
+.app-header__logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.app-header__logo .icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--main-red), var(--main-blue)); color: #fff; }
+.app-header__logo .text { font-family: "Montserrat", sans-serif; font-weight: 700; font-size: 18px; color: var(--main-blue); text-transform: uppercase; }
+.app-header__actions { display: flex; align-items: center; gap: 20px; color: var(--muted); }
+.app-header__actions .material-icons { font-size: 28px; cursor: pointer; }
+.main-content { 
+  display: flex; flex-direction: column; 
+  align-items: center;
+  height: calc(100vh - var(--header-height)); 
+  padding: 24px; 
+  transition: padding-left var(--transition-speed) ease-in-out; 
+  flex-grow: 1; 
+  overflow-y: auto; 
+}
+
+.empty-state { max-width: 450px; text-align: center; margin: auto; }
+.empty-state h2 { font-family: 'Montserrat', sans-serif; font-size: 22px; margin-top: 0; margin-bottom: 8px; }
+.empty-state p { color: var(--muted); font-size: 16px; line-height: 1.5; margin-bottom: 24px; }
+.button-cta { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; border-radius: var(--radius); text-decoration: none; font-size: 16px; font-weight: 700; cursor: pointer; border: none; background-color: var(--main-blue); color: #fff; transition: background-color 0.2s; }
+.button-cta:hover { background-color: #1a2cb1; }
+
+
+/* === 6. Responsive Navigation === */
+.app-nav { background: #fff; z-index: 50; transition: width var(--transition-speed) ease-in-out; }
+.nav-item { text-decoration: none; color: var(--muted); display: flex; align-items: center; font-weight: 600; transition: color 0.2s, background-color 0.2s; white-space: nowrap; overflow: hidden; }
+.nav-item.active { color: var(--main-blue); }
+.nav-item .nav-text { transition: opacity 0.2s ease-in-out; }
+
+/* Mobile Nav */
+@media (max-width: 767px) {
+  .app-body { padding-bottom: var(--nav-height-mobile); }
+  .app-nav { display: flex; justify-content: space-around; height: var(--nav-height-mobile); border-top: 1px solid var(--border-color); position: fixed; bottom: 0; left: 0; right: 0; }
+  .nav-item { flex-direction: column; justify-content: center; font-size: 12px; gap: 4px; padding: 4px 8px; }
+  .nav-item .material-icons { font-size: 24px; }
+  .main-content { padding-bottom: calc(24px + var(--nav-height-mobile)); }
+}
+
+/* Desktop Nav */
+@media (min-width: 768px) {
+  body.app-body { padding-left: var(--sidenav-width-collapsed); padding-bottom: 24px; }
+  body.app-body.sidenav-expanded { padding-left: var(--sidenav-width-desktop); }
+  .hamburger-menu { display: block; }
+  .main-content { padding-bottom: 24px; }
+  .app-nav { display: flex; flex-direction: column; position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidenav-width-collapsed); border-right: 1px solid var(--border-color); padding: 16px 0; }
+  body.app-body.sidenav-expanded .app-nav { width: var(--sidenav-width-desktop); }
+  .nav-item { flex-direction: row; justify-content: flex-start; font-size: 15px; gap: 16px; padding: 12px 26px; }
+  .nav-item:hover { background-color: var(--light-gray); }
+  .nav-item.active { background-color: rgba(18, 35, 168, 0.1); font-weight: 700; }
+  .nav-item .material-icons { font-size: 26px; }
+  .nav-text { opacity: 0; }
+  body.app-body.sidenav-expanded .nav-text { opacity: 1; }
+  body.app-body.sidenav-expanded .nav-item { padding: 12px 24px; }
+}
+
+
+/* === 7. Wizard Styles === */
+.wizard-container { width: 100%; max-width: 600px; text-align: center; }
+.progress-bar { margin-bottom: 40px; }
+.progress-bar__label { font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 8px; }
+.progress-bar__track { width: 100%; height: 8px; background-color: var(--light-gray); border-radius: 4px; overflow: hidden; }
+.progress-bar__fill { width: 25%; height: 100%; background-color: var(--main-blue); border-radius: 4px; transition: width 0.4s ease-in-out; }
+.wizard-step { display: block; }
+.wizard-step.hidden { display: none; }
+.wizard-step h1 { font-family: 'Montserrat', sans-serif; font-size: 32px; margin-top: 0; margin-bottom: 12px; }
+.wizard-step p { color: var(--muted); font-size: 18px; line-height: 1.6; margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto; }
+.wizard-input { width: 100%; padding: 16px; border: 2px solid var(--border-color); border-radius: var(--radius); font-size: 20px; text-align: center; font-family: "IBM Plex Sans", sans-serif; transition: border-color 0.2s, box-shadow 0.2s; }
+.wizard-input:focus { outline: none; border-color: var(--main-blue); box-shadow: 0 0 0 3px rgba(18,35,168,0.2); }
+.wizard-nav { margin-top: 40px; display: flex; justify-content: space-between; align-items: center; }
+.button-wizard { display: inline-flex; align-items: center; gap: 8px; padding: 14px 24px; border-radius: var(--radius); text-decoration: none; font-size: 16px; font-weight: 700; cursor: pointer; border: none; background-color: var(--main-blue); color: #fff; transition: background-color 0.2s, opacity 0.2s; }
+.button-wizard.secondary { background-color: transparent; color: var(--muted); }
+.button-wizard:disabled { background-color: #ccc; cursor: not-allowed; color: #fff; }
+
+/* === 8. Modal Styles === */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(11, 11, 11, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wizard-container, .quick-add-container {
+  background: #fff;
+  padding: 24px 32px;
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+}
+
+.close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  cursor: pointer;
+  color: var(--muted);
+  background: var(--light-gray);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.close-button:hover {
+  background-color: var(--border-color);
+  color: var(--text);
+}
+/* === 9. Dashboard & Projekt-Karten Styles === */
+
+.main-content {
+    align-items: stretch;
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto 24px auto;
+}
+
+.view-header__title h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 28px;
+    margin: 0;
+}
+.view-header__title p {
+    font-size: 16px;
+    color: var(--muted);
+    margin: 4px 0 0 0;
+    font-weight: 600;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.project-card {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: pointer;
+    text-align: left;
+}
+
+.project-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(15,23,55,0.08);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.project-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.card-menu {
+    color: var(--muted);
+}
+
+.card-body {
+    flex-grow: 1;
+}
+
+.next-milestone {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 4px 0;
+}
+
+.milestone-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.card-footer {
+    margin-top: 20px;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.progress-label {
+    color: var(--muted);
+}
+
+.progress-percent {
+    color: var(--text);
+}
+
+.card-progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: var(--light-gray);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.card-progress-fill {
+    height: 100%;
+    background-color: var(--main-blue);
+    border-radius: 4px;
+}
+
+/* === 10. Projekt-Detail & Timeline Styles === */
+
+.project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto 32px auto;
+    gap: 24px;
+}
+
+.project-header__title h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 28px;
+    margin: 0 0 12px 0;
+}
+
+.project-header__progress-bar {
+    width: 100%;
+    height: 8px;
+    background-color: var(--light-gray);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.project-header__progress-fill {
+    height: 100%;
+    background-color: var(--main-blue);
+    border-radius: 4px;
+}
+
+.project-header__actions {
+    display: flex;
+    gap: 12px;
+}
+
+.button-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background-color: #fff;
+    color: var(--text);
+}
+
+.timeline {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.milestone {
+    display: flex;
+    position: relative;
+    gap: 24px;
+    padding-bottom: 32px;
+}
+
+.milestone__line {
+    position: absolute;
+    left: 18px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: var(--light-gray);
+}
+
+.milestone:last-child .milestone__line {
+    display: none;
+}
+
+.milestone__icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--light-gray);
+    color: var(--muted);
+    border: 4px solid #fff;
+    z-index: 1;
+}
+
+.milestone.current .milestone__icon {
+    background-color: var(--main-blue);
+    color: #fff;
+}
+
+.milestone__content {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 20px;
+}
+
+.milestone__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 16px;
+}
+
+.milestone__header h3 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.milestone__header span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.task-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.task-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.task-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.task-item.completed .task-checkbox {
+    background-color: var(--main-blue);
+    border-color: var(--main-blue);
+    color: #fff;
+}
+
+.task-item.completed .task-text {
+    text-decoration: line-through;
+    color: var(--muted);
+}
+
+.task-checkbox .material-icons {
+    font-size: 16px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s;
+}
+
+.task-item.completed .task-checkbox .material-icons {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* === 11. Heute-Ansicht Styles === */
+
+.today-list, .today-top-container, .settings-container, .inbox-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.today-task-item {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+.task-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-grow: 1;
+}
+
+.today-task-item .task-checkbox {
+    width: 24px;
+    height: 24px;
+}
+
+.task-text {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.today-task-item.completed .task-checkbox {
+    background-color: var(--main-blue);
+    border-color: var(--main-blue);
+    color: #fff;
+}
+
+.today-task-item.completed .task-text {
+    text-decoration: line-through;
+    color: var(--muted);
+}
+
+.task-project-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.task-project-link a {
+    color: var(--main-blue);
+    text-decoration: none;
+}
+.task-project-link a:hover {
+    text-decoration: underline;
+}
+
+/* === 13. Inbox-Ansicht Styles === */
+
+.inbox-input-container {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.inbox-input {
+    flex-grow: 1;
+    padding: 12px 16px;
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: #fff;
+}
+.inbox-input:focus {
+    outline: none;
+    border-color: var(--main-blue);
+    box-shadow: 0 0 0 2px rgba(18,35,168,0.2);
+}
+
+.inbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.inbox-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+}
+
+.inbox-item-text {
+    font-weight: 600;
+}
+
+.inbox-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* === 14. Einstellungen-Ansicht Styles === */
+
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.settings-section {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: left;
+}
+
+.settings-section h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.profile-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar .material-icons {
+    font-size: 64px;
+    color: var(--muted);
+}
+
+.profile-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-name {
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.profile-email {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+}
+
+.setting-item span, .setting-item label {
+    font-weight: 600;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    border-radius: 34px;
+    transition: .4s;
+}
+
+.toggle-label:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+}
+
+.toggle-input:checked + .toggle-label {
+    background-color: var(--main-blue);
+}
+
+.toggle-input:checked + .toggle-label:before {
+    transform: translateX(22px);
+}
+
+.logout-link {
+    color: var(--main-red);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.setting-input {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    text-align: right;
+    font-weight: 600;
+}
+input[type="date"].setting-input {
+    width: auto;
+}
+
+/* === 15. Quick-Add, Pomodoro & Wizard Styles === */
+
+.quick-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--main-blue);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(18,35,168,0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.quick-add-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(18,35,168,0.3);
+}
+.quick-add-container {
+    max-width: 480px;
+}
+.quick-add-container h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 22px;
+    margin: 0 0 8px 0;
+}
+.quick-add-container p {
+    color: var(--muted);
+    margin-bottom: 24px;
+}
+.quick-add-container .input-group {
+    margin-bottom: 24px;
+}
+
+.pomodoro-timer {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.timer-display {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--text);
+}
+.timer-controls {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+.timer-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background-color: #fff;
+}
+.timer-btn.secondary {
+    padding: 8px;
+}
+.timer-btn:first-child {
+    background-color: var(--main-blue);
+    color: #fff;
+    border-color: var(--main-blue);
+}
+
+.task-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.start-task-timer-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 28px;
+    padding: 0;
+    display: flex;
+}
+.start-task-timer-btn:hover {
+    color: var(--main-blue);
+}
+
+.options-container { display: flex; flex-direction: column; gap: 12px; margin-top: 24px; }
+.option-button { display: flex; width: 100%; padding: 16px; border: 2px solid var(--border-color); border-radius: var(--radius); font-size: 16px; font-weight: 600; text-align: left; cursor: pointer; background-color: #fff; transition: border-color 0.2s, background-color 0.2s; align-items: center; gap: 12px; }
+.option-button:hover { border-color: var(--main-blue); }
+.option-button.selected { border-color: var(--main-blue); background-color: rgba(18, 35, 168, 0.1); font-weight: 700; }
+.option-button.danger { color: var(--main-red); border-color: var(--main-red); }
+.option-button.danger:hover { background-color: rgba(227, 32, 45, 0.05); }
+
+/* === 16. Kontext, Streak & Pomodoro Styles === */
+.card-context {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    background-color: var(--light-gray);
+    padding: 6px 12px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    margin: -20px -20px 16px -20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pomodoro-count, .task-streak {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 99px;
+}
+.pomodoro-count {
+    color: var(--muted);
+    background-color: var(--light-gray);
+}
+.pomodoro-count .pomodoro-completed {
+    color: var(--text);
+}
+.task-streak {
+    color: #E67E22;
+    background-color: rgba(230, 126, 34, 0.1);
+}
+
+.today-task-item.task-in-progress {
+    background-color: rgba(18, 35, 168, 0.05);
+    border-color: var(--main-blue);
+    box-shadow: 0 0 0 1px var(--main-blue);
+}
+.today-task-item.task-in-progress .start-task-timer-btn {
+    color: var(--main-blue);
+}
+
+/* === 17. Today View Layout === */
+
+.today-top-container {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+    margin-bottom: 24px;
+}
+
+.daily-cockpit {
+    flex: 3;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.daily-cockpit h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    margin: 0 0 16px 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.cockpit-goals {
+    display: flex;
+    gap: 32px;
+    margin: auto 0;
+    align-items: center;
+}
+
+.goal-stat {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.2;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+}
+
+.stat-current { color: var(--text); }
+.stat-divider { color: var(--muted); margin: 0 2px; font-size: 20px; }
+.stat-target { color: var(--muted); font-size: 18px; font-weight: 600; }
+
+.cockpit-trackers {
+    display: flex;
+    gap: 32px;
+}
+
+.tracker-stat .stat-value {
+    font-size: 20px;
+    color: var(--main-blue);
+}
+.tracker-stat .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+/* === 18. Zusätzliche UI-Elemente === */
+.badge {
+    background-color: var(--muted);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+}
+.option-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--light-gray);
+}
+.milestones-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: left;
+}
+.milestone-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.milestone-input-group input {
+    flex-grow: 1;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+}
+.milestone-input-group .button-icon {
+    padding: 8px;
+    min-width: auto;
+}
+.setting-description {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: -12px;
+    margin-bottom: 16px;
+}
+.day-picker-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+.day-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.day-toggle.active {
+    background-color: var(--main-blue);
+    color: #fff;
+    border-color: var(--main-blue);
+}
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: var(--radius);
+    font-weight: 600;
+    z-index: 2000;
+    opacity: 1;
+    transition: opacity 0.3s, bottom 0.3s;
+}
+.toast.hidden {
+    opacity: 0;
+    bottom: -50px;
+    pointer-events: none;
+}
+.task-time {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--main-blue);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 110px;
+}
+.task-time .material-icons {
+    font-size: 18px;
+}
+/* === 19. Dashboard Widget Grid === */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Erstellt ein 4-spaltiges Grid */
+    grid-auto-rows: minmax(150px, auto);    /* Definiert eine Mindesthöhe für die Zeilen */
+    gap: 24px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.widget {
+    background: #fff;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.widget h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Helferklassen für die Größen der Kacheln */
+.span-2-col {
+    grid-column: span 2; /* Nimmt 2 von 4 Spalten ein */
+}
+
+.span-4-col {
+    grid-column: span 4; /* Nimmt die volle Breite ein */
+}
+
+.half-height {
+    grid-row: span 1;
+    min-height: 80px; /* Kleinere Mindesthöhe */
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Spezifische Stile für Widget-Inhalte */
+#pomodoro-widget .timer-display,
+#pomodoro-widget .timer-controls {
+    margin: auto; /* Zentriert den Timer in der Kachel */
+}
+
+.active-project-content p {
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 0;
+}
+.active-project-content .card-footer {
+    margin-top: auto; /* Schiebt die Progress-Bar nach unten */
+}
+
+#quick-add-widget .inbox-input {
+    margin-bottom: 0;
+}

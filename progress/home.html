@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Progress</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=IBM+Plex+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="app-body">
+    <header class="app-header">
+      <div class="header-left">
+        <span class="material-icons hamburger-menu" id="hamburger">menu</span>
+        <a
+          href="#"
+          class="app-header__logo"
+          onclick="event.preventDefault(); navigateTo('dashboard');"
+        >
+          <div class="icon">
+            <span class="material-icons">trending_up</span>
+          </div>
+          <span class="text">Progress</span>
+        </a>
+      </div>
+      <div class="app-header__actions">
+        <span class="material-icons" id="search-btn">search</span>
+        <span class="material-icons" id="notifications-btn">notifications</span>
+        <span class="material-icons" id="account-btn">account_circle</span>
+        <button
+          class="quick-add-btn"
+          id="quick-add-btn"
+          title="Schnellerfassung"
+        >
+          <span class="material-icons">add</span>
+        </button>
+      </div>
+    </header>
+    <nav class="app-nav">
+      <a href="#" class="nav-item active" data-nav="dashboard"
+        ><span class="material-icons">space_dashboard</span
+        ><span class="nav-text">Dashboard</span></a
+      >
+      <a href="#" class="nav-item" data-nav="inbox-content"
+        ><span class="material-icons">inbox</span
+        ><span class="nav-text">Inbox</span></a
+      >
+      <a href="#" class="nav-item" data-nav="today-content"
+        ><span class="material-icons">today</span
+        ><span class="nav-text">Heute</span></a
+      >
+      <a href="#" class="nav-item" data-nav="projects-content"
+        ><span class="material-icons">topic</span
+        ><span class="nav-text">Projekte</span></a
+      >
+      <a href="#" class="nav-item" data-nav="timeline-content"
+        ><span class="material-icons">timeline</span
+        ><span class="nav-text">Timeline</span></a
+      >
+      <a href="#" class="nav-item" data-nav="settings-content"
+        ><span class="material-icons">settings</span
+        ><span class="nav-text">Einstellungen</span></a
+      >
+    </nav>
+
+    <main class="main-content" id="app-content"></main>
+
+    <div id="quick-add-modal" class="modal-overlay hidden">
+      <div class="quick-add-container">
+        <button class="close-button" id="close-quick-add-btn">
+          <span class="material-icons">close</span>
+        </button>
+        <h2>Schnellerfassung</h2>
+        <p>Was liegt dir auf dem Herzen?</p>
+        <div class="input-group">
+          <input
+            type="text"
+            id="quick-add-input"
+            placeholder="Neue Idee oder Aufgabe..."
+          />
+        </div>
+        <button id="save-quick-add-btn" class="button-cta">Speichern</button>
+      </div>
+    </div>
+
+    <!-- Skripte in der richtigen Reihenfolge laden -->
+    <script src="js/api.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/viewManager.js"></script>
+    <script src="js/pomodoro.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/wizard.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

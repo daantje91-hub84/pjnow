@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Willkommen — Progress Journal</title>
+
+  <!-- Verlinkung zur zentralen CSS-Datei -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Google Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+</head>
+<body class="app-body">
+
+  <!-- 1. Statischer Dashboard-Hintergrund -->
+  <header class="app-header">
+    <div class="header-left">
+      <span class="material-icons hamburger-menu" id="hamburger">menu</span>
+      <a href="#" class="app-header__logo">
+        <div class="icon"><span class="material-icons">trending_up</span></div>
+        <span class="text">Progress</span>
+      </a>
+    </div>
+    <div class="app-header__actions">
+      <span class="material-icons">search</span>
+      <span class="material-icons">notifications</span>
+      <span class="material-icons">account_circle</span>
+    </div>
+  </header>
+  <nav class="app-nav">
+    <a href="#" class="nav-item active"><span class="material-icons">space_dashboard</span><span class="nav-text">Dashboard</span></a>
+    <a href="#" class="nav-item"><span class="material-icons">inbox</span><span class="nav-text">Inbox</span></a>
+    <a href="#" class="nav-item"><span class="material-icons">today</span><span class="nav-text">Heute</span></a>
+    <a href="#" class="nav-item"><span class="material-icons">topic</span><span class="nav-text">Projekte</span></a>
+    <a href="#" class="nav-item"><span class="material-icons">timeline</span><span class="nav-text">Timeline</span></a>
+    <a href="#" class="nav-item"><span class="material-icons">settings</span><span class="nav-text">Einstellungen</span></a>
+  </nav>
+  <main class="main-content">
+     <div class="projects-grid" style="max-width: 1200px;">
+        <!-- Persona-Karten werden hier per JS eingefügt -->
+        <div id="anna-card-container"></div>
+        <div id="thomas-card-container"></div>
+    </div>
+  </main>
+
+  <!-- 2. Onboarding Overlay & Pop-ups -->
+  <div class="onboarding-overlay">
+    <div id="onboarding-step-1" class="onboarding-popup">
+        <h2>Willkommen!</h2>
+        <p>Wir zeigen dir anhand zweier Beispiele, wie Progress Journal funktioniert - lerne Anna & Thomas kennen.</p>
+        <button class="button-primary">Weiter</button>
+    </div>
+
+    <div id="onboarding-step-2" class="onboarding-popup hidden">
+        <p>Das ist <strong>Anna</strong>. Sie will einen Marathon laufen. Progress Journal hilft ihr, das große Ziel in kleine, wöchentliche Schritte zu zerlegen.</p>
+        <button class="button-primary">Weiter</button>
+    </div>
+
+    <div id="onboarding-step-3" class="onboarding-popup hidden">
+        <p>Das ist <strong>Thomas</strong>. Er möchte seine Spielstärke im Schach verbessern. Die App hilft ihm, seine Trainingsroutine zu verfolgen.</p>
+        <button class="button-primary">Weiter</button>
+    </div>
+    
+    <div id="onboarding-step-4" class="onboarding-popup hidden">
+        <p>Jetzt hat Thomas in der Arbeit ein wichtiges Projekt dazubekommen - weniger Zeit fürs Training. Progress Journal <strong>passt seine Roadmap automatisch an</strong>.</p>
+        <button class="button-primary">Weiter</button>
+    </div>
+
+    <div id="onboarding-step-5" class="onboarding-tooltip hidden">
+        <p>Jedes Projekt hat eine visuelle Roadmap. Klicke auf Annas Projekt, um sie zu sehen.</p>
+    </div>
+
+     <div id="onboarding-step-6" class="onboarding-popup hidden">
+        <h2>Deine Bühne</h2>
+        <p>So behältst du Motivation und Klarheit - selbst wenn sich deine Zeit ändert. Jetzt bist du dran: Erstelle dein erstes Ziel.</p>
+        <a href="dashboard-empty.html?startWizard=true" class="button-primary">Loslegen!</a>
+    </div>
+  </div>
+  
+  <script>
+    // --- Statische Dashboard-Logik ---
+    const hamburgerBtn = document.getElementById('hamburger');
+    const bodyEl = document.body;
+    if (hamburgerBtn) {
+        if (window.innerWidth >= 768) { bodyEl.classList.add('sidenav-expanded'); }
+        hamburgerBtn.addEventListener('click', () => { bodyEl.classList.toggle('sidenav-expanded'); });
+    }
+
+    // --- Onboarding-Logik ---
+    const steps = [
+        document.getElementById('onboarding-step-1'),
+        document.getElementById('onboarding-step-2'),
+        document.getElementById('onboarding-step-3'),
+        document.getElementById('onboarding-step-4'),
+        document.getElementById('onboarding-step-5'),
+        document.getElementById('onboarding-step-6'),
+    ];
+    const annaCardContainer = document.getElementById('anna-card-container');
+    const thomasCardContainer = document.getElementById('thomas-card-container');
+    let currentStep = 0;
+
+    const annaCardHTML = `
+      <div id="anna-card" class="persona-card persona--anna" style="--progress: 42;">
+        <div class="persona-avatar"><span class="initials">A</span></div>
+        <div class="persona-header"><h3 class="persona-name">Anna</h3><p class="persona-role">Marathon</p></div>
+        <div class="persona-badge">Motiviert</div>
+        <div class="persona-meta"><span class="persona-chip"><span class="dot"></span> 10k-Plan</span><span class="persona-chip"><span class="dot"></span> Wochenziel 4x</span></div>
+        <div class="persona-availability"><div class="avail-label"><span>Verfügbare Zeit</span><span>6 / 10 Std</span></div><div class="avail-bar avail--ok" style="--hours:6; --max-hours:10;"><div class="avail-fill"></div></div></div>
+      </div>`;
+    
+    const thomasCardHTML = `
+      <div id="thomas-card" class="persona-card persona--thomas" style="--progress: 27;">
+        <div class="persona-avatar"><span class="initials">T</span></div>
+        <div class="persona-header"><h3 class="persona-name">Thomas</h3><p class="persona-role">Schach-Elo</p></div>
+        <div class="persona-badge">Fokussiert</div>
+        <div class="persona-meta"><span class="persona-chip"><span class="dot"></span> Taktik-Drills</span><span class="persona-chip"><span class="dot"></span> Analyse</span></div>
+        <div class="persona-availability"><div class="avail-label"><span>Verfügbare Zeit</span><span>8 / 10 Std</span></div><div class="avail-bar avail--ok" style="--hours:8; --max-hours:10;"><div class="avail-fill"></div></div></div>
+      </div>`;
+    
+    const thomasCardBusyHTML = `
+      <div id="thomas-card-busy" class="persona-card persona--thomas persona--busy" style="--progress: 27;">
+        <div class="persona-avatar"><span class="initials">T</span></div>
+        <div class="persona-header"><h3 class="persona-name">Thomas</h3><p class="persona-role">Schach-Elo</p></div>
+        <div class="persona-badge replanned"><span class="material-icons">schedule</span> neu geplant</div>
+        <div class="persona-meta"><span class="persona-chip"><span class="dot"></span> Taktik-Drills</span><span class="persona-chip"><span class="dot"></span> Analyse</span></div>
+        <div class="persona-availability"><div class="avail-label"><span>Verfügbare Zeit</span><span>3 / 10 Std</span></div><div class="avail-bar avail--low" style="--hours:3; --max-hours:10;"><div class="avail-fill"></div></div></div>
+      </div>`;
+
+    function goToStep(stepIndex) {
+        steps.forEach(s => s.classList.add('hidden'));
+        if (steps[stepIndex]) {
+            steps[stepIndex].classList.remove('hidden');
+        }
+        currentStep = stepIndex;
+        runStepLogic(currentStep);
+    }
+
+    function runStepLogic(stepIndex) {
+        // Reset highlights
+        document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+
+        if (stepIndex === 1) { // Anna
+            annaCardContainer.innerHTML = annaCardHTML;
+            annaCardContainer.firstElementChild.classList.add('highlight');
+        } else if (stepIndex === 2) { // Thomas
+            thomasCardContainer.innerHTML = thomasCardHTML;
+            thomasCardContainer.firstElementChild.classList.add('highlight');
+        } else if (stepIndex === 3) { // Thomas Busy
+            thomasCardContainer.innerHTML = thomasCardBusyHTML;
+            thomasCardContainer.firstElementChild.classList.add('highlight');
+        } else if (stepIndex === 4) { // Roadmap in Aktion
+            annaCardContainer.firstElementChild.classList.add('highlight', 'clickable');
+            annaCardContainer.firstElementChild.onclick = () => goToStep(5);
+        }
+    }
+
+    document.querySelector('.onboarding-overlay').addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            goToStep(currentStep + 1);
+        }
+    });
+
+    // Start
+    goToStep(0);
+  </script>
+
+</body>
+</html>

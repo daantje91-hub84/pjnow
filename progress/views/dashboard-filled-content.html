@@ -1,0 +1,60 @@
+<div class="view-header">
+    <div class="view-header__title">
+        <h1>Dashboard</h1>
+        <p>Dein Cockpit für den heutigen Tag</p>
+    </div>
+    <button class="button-cta" id="open-wizard-btn-filled">
+        <span class="material-icons">add</span>
+        Neues Projekt
+    </button>
+</div>
+
+<div class="dashboard-grid">
+    <div id="daily-goals-widget" class="widget span-2-col">
+        <h3>Tagesziele</h3>
+        <div class="cockpit-goals">
+            <div class="goal-stat">
+                <div class="stat-value"><span id="tasks-completed-stat">0</span>/<span id="tasks-target-stat">0</span></div>
+                <div class="stat-label">Aufgaben</div>
+            </div>
+            <div class="goal-stat">
+                <div class="stat-value"><span id="pomodoros-completed-stat">0</span>/<span id="pomodoros-target-stat">0</span></div>
+                <div class="stat-label">Pomodoros</div>
+            </div>
+            <div class="goal-stat">
+                <div class="stat-value" id="active-streaks-stat">🔥 0</div>
+                <div class="stat-label">Aktive Streaks</div>
+            </div>
+        </div>
+    </div>
+    <div id="pomodoro-widget" class="widget span-2-col">
+        <h3>Pomodoro Timer</h3>
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="timer-controls">
+            <button id="start-pause-btn" class="timer-btn"><span class="material-icons">play_arrow</span> Start</button>
+            <button id="reset-btn" class="timer-btn secondary"><span class="material-icons">replay</span></button>
+        </div>
+    </div>
+
+    <div id="active-project-widget" class="widget span-4-col">
+        <h3>Aktives Projekt: Marathon</h3>
+        <div class="active-project-content">
+            <p>Nächster Schritt: Die richtigen Laufschuhe kaufen</p>
+            <div class="card-footer">
+                <div class="progress-info"><span class="progress-label">Fortschritt</span><span class="progress-percent">0%</span></div>
+                <div class="card-progress-bar"><div class="card-progress-fill" style="width: 0%;"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="habit-tracker-widget" class="widget span-4-col">
+         <h3>Tägliche Gewohnheiten</h3>
+        <div class="habit-list" id="dashboard-habit-list">
+            </div>
+    </div>
+
+    <div id="quick-add-widget" class="widget span-4-col half-height">
+        <input type="text" placeholder="Eine Idee oder Aufgabe schnell erfassen..." class="inbox-input">
+        <button class="button-icon"><span class="material-icons">add</span> Hinzufügen</button>
+    </div>
+</div>

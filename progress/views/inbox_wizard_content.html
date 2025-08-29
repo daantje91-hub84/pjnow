@@ -1,0 +1,66 @@
+<!-- ======================================================= -->
+<!-- NEUER INBOX VERARBEITUNGS-WIZARD (als separate Datei) -->
+<!-- ======================================================= -->
+<div id="process-wizard-modal" class="modal-overlay">
+    <div class="wizard-container">
+        <button class="close-button" id="close-process-wizard-btn"><span class="material-icons">close</span></button>
+        
+        <!-- Header, der den zu verarbeitenden Text anzeigt -->
+        <header class="process-wizard-header">
+            <p>Verarbeite:</p>
+            <h2 id="process-wizard-task-text">Text des Eintrags wird hier geladen...</h2>
+        </header>
+
+        <main class="wizard-content">
+            <!-- Schritt 1: Grundlegende Entscheidung -->
+            <section id="process-step-1" class="wizard-step">
+                <h1>Ist eine Aktion erforderlich?</h1>
+                <div class="options-container vertical">
+                    <button type="button" class="option-button" data-action="is_task">
+                        <span class="material-icons">task_alt</span> Ja, es ist eine Aufgabe
+                    </button>
+                    <button type="button" class="option-button" data-action="is_note">
+                        <span class="material-icons">note</span> Nein, es ist nur eine Notiz/Idee
+                    </button>
+                    <button type="button" class="option-button danger" data-action="trash">
+                        <span class="material-icons">delete_outline</span> Löschen
+                    </button>
+                </div>
+            </section>
+
+            <!-- Schritt 2: Projekt oder Einzelaufgabe? -->
+            <section id="process-step-2" class="wizard-step hidden">
+                <h1>Besteht diese Aufgabe aus mehreren Schritten?</h1>
+                <div class="options-container vertical">
+                    <button type="button" class="option-button" data-action="new_project">
+                        <span class="material-icons">create_new_folder</span> Ja, es ist ein neues Projekt
+                    </button>
+                    <button type="button" class="option-button" data-action="single_task">
+                        <span class="material-icons">check_box_outline_blank</span> Nein, es ist eine einzelne Aufgabe
+                    </button>
+                </div>
+                <div id="new-project-input-container" class="hidden" style="margin-top: 20px;">
+                    <input type="text" id="new-project-name" class="wizard-input" placeholder="Projektname eingeben...">
+                    <button id="save-new-project-btn" class="button-cta" style="margin-top: 12px;">Projekt erstellen & Aufgabe zuordnen</button>
+                </div>
+            </section>
+
+            <!-- Schritt 3: Bestehendem Projekt zuordnen -->
+            <section id="process-step-3" class="wizard-step hidden">
+                <h1>Möchtest du die Aufgabe einem Projekt zuordnen?</h1>
+                <div id="project-list-container" class="options-container vertical">
+                    <!-- Projektliste wird hier dynamisch per JS eingefügt -->
+                </div>
+                <button type="button" class="option-button" data-action="standalone_task" style="margin-top: 12px;">
+                    Als eigenständige Aufgabe belassen
+                </button>
+            </section>
+        </main>
+        
+        <footer class="wizard-nav">
+            <button type="button" id="process-prev-button" class="button-wizard secondary hidden">
+                <span class="material-icons">arrow_back</span><span>Zurück</span>
+            </button>
+        </footer>
+    </div>
+</div>

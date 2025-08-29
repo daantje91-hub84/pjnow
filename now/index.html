@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Now - Wissens-Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://db.onlinewebfonts.com/c/a0fa22467428e29b29a67bf3b5af2ab7?family=t"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Forum&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="bg-gray-900 text-gray-200 antialiased h-screen overflow-hidden">
+    <div
+      id="splash-screen"
+      class="fixed inset-0 bg-gray-900 flex flex-col items-center justify-center z-50 cursor-pointer"
+    >
+      <div class="flex items-center gap-8">
+        <div class="splash-logo"></div>
+        <h1 class="font-logo text-9xl text-white tracking-widest">NOW</h1>
+      </div>
+      <p
+        id="start-text"
+        class="font-button mt-12 text-gray-500 text-lg tracking-wider opacity-0 transition-opacity duration-1000"
+      >
+        Klicken zum Starten
+      </p>
+    </div>
+
+    <div id="now-app-container" class="w-full h-full flex flex-col hidden-view">
+      <header
+        class="flex items-center gap-4 p-4 border-b border-gray-700 flex-shrink-0 bg-gray-800"
+      >
+        <div class="now-logo">
+          <div class="logo-part-1"></div>
+          <div class="logo-part-2"></div>
+        </div>
+        <h1 class="font-logo text-2xl text-gray-200 tracking-widest">
+          Now Wissens-Hub
+        </h1>
+      </header>
+
+      <div class="flex flex-grow h-full overflow-hidden">
+        <aside
+          id="sidebar"
+          class="bg-gray-800 p-4 border-r border-gray-700 flex flex-col"
+        >
+          <div class="flex justify-end mb-4 flex-shrink-0">
+            <button
+              id="hamburger-btn"
+              class="p-2 rounded-md hover:bg-gray-700 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6 text-gray-300"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <nav id="main-nav" class="flex-grow space-y-2 overflow-hidden">
+            <button
+              id="new-note-btn"
+              class="nav-button font-bold text-white bg-indigo-600 hover:bg-indigo-500"
+            >
+              <span class="material-icons">add_circle</span>
+              <span class="button-text">Neue Notiz</span>
+            </button>
+            <hr class="border-gray-600 my-2" />
+            <button data-view="toc-view" class="nav-button active">
+              <span class="material-icons">toc</span>
+              <span class="button-text">Inhaltsverzeichnis</span>
+            </button>
+            <button data-view="contexts-view" class="nav-button">
+              <span class="material-icons">tag</span>
+              <span class="button-text">Kontexte</span>
+            </button>
+            <button data-view="graph-view" class="nav-button">
+              <span class="material-icons">hub</span>
+              <span class="button-text">Graph</span>
+            </button>
+            <button data-view="projects-view" class="nav-button">
+              <span class="material-icons">view_kanban</span>
+              <span class="button-text">Projekte</span>
+            </button>
+          </nav>
+
+          <div class="flex-shrink-0">
+            <button data-view="settings-view" class="nav-button">
+              <span class="material-icons">settings</span>
+              <span class="button-text">Einstellungen</span>
+            </button>
+          </div>
+        </aside>
+
+        <main class="w-2/3 flex-grow p-8 bg-gray-900 overflow-y-auto">
+          <div id="notes-view" class="app-view hidden">
+            <div id="editor-container" class="flex flex-col h-full">
+              <input
+                type="text"
+                id="note-title"
+                placeholder="Unbenannte Notiz"
+                class="font-headline bg-transparent text-5xl text-gray-100 focus:outline-none w-full mb-6 tracking-wider flex-shrink-0"
+              />
+              <div
+                id="metadata-container"
+                class="flex-shrink-0 mb-4 p-4 border border-gray-700 rounded-lg"
+              ></div>
+              <div class="editor-wrapper flex-grow">
+                <div id="highlight-layer"></div>
+                <textarea id="note-content" placeholder="Notiz ..."></textarea>
+              </div>
+              <!-- Container für Backlinks und Aktionen am unteren Rand -->
+              <div id="bottom-container" class="hidden">
+                <div class="border-t border-gray-700 pt-4">
+                  <h2 class="font-headline text-2xl text-gray-400 mb-4">
+                    Verknüpfungen zu dieser Notiz
+                  </h2>
+                  <ul id="backlinks-list" class="mb-6"></ul>
+                  <button
+                    id="process-note-btn"
+                    class="font-button w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg transition-colors text-base tracking-wider flex items-center justify-center gap-2 hidden"
+                  >
+                    <span class="material-icons" style="font-size: 20px"
+                      >auto_awesome</span
+                    >
+                    Mit KI verarbeiten
+                  </button>
+                  <button
+                    id="find-connections-btn"
+                    class="font-button w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded-lg transition-colors text-base tracking-wider flex items-center justify-center gap-2 mt-2"
+                  >
+                    <span class="material-icons" style="font-size: 20px"
+                      >psychology</span
+                    >
+                    Finde Verbindungen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="contexts-view" class="app-view hidden">
+            <h1
+              class="font-headline text-5xl text-gray-100 mb-8 tracking-wider"
+            >
+              Kontexte
+            </h1>
+            <div id="contexts-container"></div>
+          </div>
+
+          <div id="toc-view" class="app-view">
+            <h1
+              class="font-headline text-5xl text-gray-100 mb-8 tracking-wider"
+            >
+              Inhaltsverzeichnis
+            </h1>
+            <div id="toc-container"></div>
+          </div>
+
+          <div id="graph-view" class="app-view hidden">
+            <h1 class="font-headline text-5xl">Graph Ansicht</h1>
+            <div id="graph-container"></div>
+          </div>
+
+          <div id="projects-view" class="app-view hidden">
+            <h1
+              class="font-headline text-5xl text-gray-100 mb-8 tracking-wider"
+            >
+              Projekt-Board
+            </h1>
+            <div id="kanban-board" class="flex gap-6"></div>
+          </div>
+
+          <div id="settings-view" class="app-view hidden">
+            <h1
+              class="font-headline text-5xl text-gray-100 mb-8 tracking-wider"
+            >
+              Einstellungen
+            </h1>
+            <div
+              class="max-w-lg p-6 bg-gray-800 rounded-lg border border-gray-700"
+            >
+              <h2 class="font-headline text-2xl text-gray-300 mb-2">
+                Datensynchronisierung
+              </h2>
+              <p class="mb-6 text-gray-400">
+                Verbinde dein Google Drive-Konto, um deine Notizen als
+                Markdown-Dateien sicher in einem speziellen App-Ordner
+                ("Tresor") zu sichern.
+              </p>
+
+              <!-- Dieser Button wird angezeigt, wenn NICHT verbunden -->
+              <button
+                id="connect-google-drive-btn"
+                class="font-button w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition-colors text-lg tracking-wider flex items-center justify-center gap-3"
+              >
+                <svg
+                  class="w-6 h-6"
+                  fill="currentColor"
+                  viewBox="0 0 488 512"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M488 261.8C488 403.3 381.5 512 244 512 106.5 512 0 403.3 0 261.8 0 120.3 106.5 11.8 244 11.8c70.4 0 129.5 30.3 173.4 78.4l-71.8 69.8C314.5 125.1 282.3 104 244 104c-69.9 0-126.6 56.7-126.6 126.6s56.7 126.6 126.6 126.6c76.1 0 112.3-56.9 115.4-86.8H244v-83.4h239.9c2.3 12.7 3.9 24.9 3.9 41.4z"
+                  ></path>
+                </svg>
+                Mit Google Drive verbinden
+              </button>
+
+              <!-- Diese Statusanzeige wird angezeigt, WENN verbunden -->
+              <div
+                id="google-drive-status"
+                class="hidden font-button w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg text-lg tracking-wider flex items-center justify-center gap-3"
+              >
+                <span class="material-icons">check_circle</span>
+                Erfolgreich verbunden
+              </div>
+            </div>
+          </div>
+          <div
+            id="placeholder"
+            class="flex justify-center items-center h-full flex-col text-gray-600 text-center hidden"
+          ></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

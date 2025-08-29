@@ -1,0 +1,417 @@
+/* Schriftkonzept */
+body {
+  font-family: "Forum", serif;
+}
+.font-logo {
+  font-family: "t", sans-serif;
+}
+.font-button {
+  font-family: "Roboto", sans-serif;
+}
+.font-headline {
+  font-family: "Bebas Neue", sans-serif;
+}
+.font-notelist {
+  font-family: "Roboto", sans-serif;
+}
+
+/* Splash Screen & Übergänge */
+#splash-screen {
+  transition: opacity 0.5s ease-in-out;
+}
+#now-app-container {
+  transition: opacity 0.5s ease-in-out;
+}
+.hidden-view {
+  opacity: 0;
+  pointer-events: none;
+}
+.hidden {
+  display: none !important;
+}
+
+/* Logo-Styling... */
+.splash-logo {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  animation: breathe 5s ease-in-out infinite;
+}
+.splash-logo::before,
+.splash-logo::after {
+  content: "";
+  position: absolute;
+  width: 45px;
+  height: 100%;
+  top: 0;
+}
+.splash-logo::before {
+  left: 0;
+  background: linear-gradient(180deg, #3b82f6, #818cf8);
+  border-radius: 50% 50% 25px 25px / 100% 100% 25px 25px;
+  transform: skewX(15deg);
+}
+.splash-logo::after {
+  right: 0;
+  background: linear-gradient(180deg, #a78bfa, #f472b6);
+  border-radius: 25px 25px 50% 50% / 25px 25px 100% 100%;
+  transform: skewX(-15deg);
+}
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+.now-logo {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.now-logo .logo-part-1 {
+  position: absolute;
+  width: 7px;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(180deg, #3b82f6, #818cf8);
+  border-radius: 50% 50% 4px 4px / 100% 100% 4px 4px;
+  transform: skewX(15deg);
+}
+.now-logo .logo-part-2 {
+  position: absolute;
+  width: 7px;
+  height: 100%;
+  top: 0;
+  right: 0;
+  background: linear-gradient(180deg, #a78bfa, #f472b6);
+  border-radius: 4px 4px 50% 50% / 4px 4px 100% 100%;
+  transform: skewX(-15deg);
+}
+
+/* Editor & Syntax Highlighting */
+.editor-wrapper {
+  position: relative;
+  flex-grow: 1;
+  width: 100%;
+}
+#highlight-layer,
+#note-content {
+  font-family: "Forum", serif;
+  font-size: 1.125rem;
+  line-height: 1.75;
+  padding: 0.5rem;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: transparent;
+  caret-color: #e5e7eb;
+  width: 100%;
+  height: 100%;
+}
+#highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  color: #d1d5db;
+  overflow-y: auto;
+}
+#note-content {
+  position: relative;
+  z-index: 1;
+  resize: none;
+}
+.page-link {
+  color: #60a5fa;
+  cursor: pointer;
+}
+.tag {
+  background-color: rgba(167, 139, 250, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+}
+.context-separator {
+  color: #6b7280;
+  margin: 0 2px;
+}
+.context-part {
+  color: #a78bfa;
+}
+.context-level-1 {
+  font-weight: 500;
+  color: #c4b5fd;
+}
+.context-level-2 {
+  font-style: italic;
+  color: #d8b4fe;
+}
+
+/* Backlinks & Action Buttons Container */
+#bottom-container {
+  flex-shrink: 0; /* Verhindert, dass der Container schrumpft */
+  margin-top: auto; /* Schiebt den Container nach unten */
+  padding-top: 1rem; /* Etwas Abstand nach oben */
+}
+
+.backlink-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-size: 1rem;
+}
+.backlink-item:hover {
+  background-color: #374151;
+}
+.link-type {
+  margin-right: 12px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+.link-type.explicit {
+  color: #818cf8;
+}
+.link-type.implicit {
+  color: #6b7280;
+}
+
+/* Navigation & Ansichten */
+.nav-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  font-family: "Roboto", sans-serif;
+  font-weight: bold;
+  text-align: left;
+  border-radius: 6px;
+  transition: background-color 0.2s, color 0.2s;
+  color: #9ca3af;
+}
+.nav-button:hover {
+  background-color: #374151;
+  color: #f9fafb;
+}
+.nav-button.active {
+  background-color: #4f46e5;
+  color: white;
+}
+
+/* Kontexte & Inhaltsverzeichnis */
+.context-node {
+  margin-left: 20px;
+  border-left: 2px solid #4b5563;
+  padding-left: 15px;
+}
+.context-header,
+.toc-section h2 {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.context-header {
+  padding: 5px;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+.context-header:hover {
+  background-color: #374151;
+}
+.context-header .context-name {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+.context-header .note-count {
+  margin-left: 8px;
+  font-size: 0.9rem;
+  color: #9ca3af;
+  background-color: #374151;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+.context-notes,
+.toc-list {
+  padding-left: 20px;
+  margin-top: 5px;
+}
+.context-note-item,
+.toc-item {
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.2s;
+  color: #d1d5db;
+}
+.context-note-item:hover,
+.toc-item:hover {
+  background-color: #4f46e5;
+  color: white;
+}
+.toc-section h2 {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.5rem;
+  color: #9ca3af;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #4b5563;
+  padding-bottom: 0.5rem;
+}
+.collapsible-header::before {
+  content: "▶";
+  font-size: 0.8em;
+  margin-right: 10px;
+  transition: transform 0.2s ease-in-out;
+}
+.collapsible-header.open::before {
+  transform: rotate(90deg);
+}
+
+/* Ausklappbare Seitenleiste */
+#sidebar {
+  transition: width 0.3s ease-in-out;
+  width: 20rem; /* Breite im ausgeklappten Zustand */
+  flex-shrink: 0;
+  overflow-x: hidden; /* Verhindert horizontales Scrollen */
+}
+
+#sidebar.collapsed {
+  width: 5rem; /* Breite im eingeklappten Zustand (80px) */
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+/* Versteckt den Text, wenn die Seitenleiste eingeklappt ist */
+#sidebar.collapsed .button-text {
+  display: none;
+}
+
+/* Passt ALLE Buttons im eingeklappten Zustand an */
+#sidebar.collapsed .nav-button,
+#sidebar.collapsed #new-note-btn {
+  justify-content: center; /* Zentriert das Icon */
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Stellt sicher, dass das Icon im eingeklappten Zustand keinen Rand hat */
+#sidebar.collapsed .nav-button .material-icons,
+#sidebar.collapsed #new-note-btn .material-icons {
+  margin-right: 0;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Graph Container */
+#graph-container {
+  width: 100%;
+  height: 70vh; /* 70% der Bildschirmhöhe */
+  border: 1px solid #4b5563; /* Ein dezenter Rahmen */
+  margin-top: 1rem;
+}
+
+/* Metadaten-Styling */
+.metadata-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem; /* 12px */
+}
+.metadata-key {
+  font-family: "Roboto", sans-serif;
+  font-weight: bold;
+  color: #9ca3af; /* gray-400 */
+  width: 120px; /* Feste Breite für die Labels */
+  flex-shrink: 0;
+}
+.metadata-value {
+  background-color: #374151; /* gray-700 */
+  color: #e5e7eb; /* gray-200 */
+  border: 1px solid #4b5563; /* gray-600 */
+  border-radius: 6px;
+  padding: 4px 8px;
+  width: 100%;
+}
+.metadata-value:focus {
+  outline: none;
+  border-color: #60a5fa; /* blue-400 */
+}
+
+/* Kanban-Board Styling */
+#kanban-board {
+  height: 75vh;
+  overflow-x: auto; /* Ermöglicht horizontales Scrollen */
+  align-items: flex-start;
+}
+
+.kanban-column {
+  background-color: #1f2937; /* gray-800 */
+  border-radius: 8px;
+  width: 300px;
+  flex-shrink: 0; /* Verhindert, dass Spalten schrumpfen */
+  padding: 1rem;
+}
+
+.kanban-column-title {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 1.5rem;
+  color: #9ca3af; /* gray-400 */
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #4b5563; /* gray-600 */
+}
+
+.kanban-card {
+  background-color: #374151; /* gray-700 */
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  border-left: 4px solid transparent;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.kanban-card:hover {
+  background-color: #4b5563;
+}
+
+.kanban-card-prio-hoch {
+  border-left-color: #ef4444; /* red-500 */
+}
+.kanban-card-prio-mittel {
+  border-left-color: #f97316; /* orange-500 */
+}
+.kanban-card-prio-niedrig {
+  border-left-color: #22c55e; /* green-500 */
+}
+
+/* Styling für Drag & Drop */
+.kanban-card.sortable-ghost {
+  background-color: #4f46e5; /* indigo-600 */
+  opacity: 0.5;
+}
