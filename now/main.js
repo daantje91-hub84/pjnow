@@ -49,8 +49,14 @@ app.whenReady().then(async () => {
   });
 
   ipcMain.handle("notes:load", (event, folderPath) => {
+    // HINZUGEFÜGT: Detailliertes Logging
+    console.log(
+      `[Main Process] Versuche Notizen aus Ordner zu laden: ${folderPath}`
+    );
     try {
       const files = fs.readdirSync(folderPath);
+      console.log(`[Main Process] Gefundene Dateien im Ordner:`, files);
+
       const notes = files
         .filter((file) => file.endsWith(".md"))
         .map((file) => {
@@ -66,9 +72,14 @@ app.whenReady().then(async () => {
           if (frontmatterMatch) {
             try {
               metadata = jsyaml.load(frontmatterMatch[1]) || {};
-              noteContent = content.substring(frontmatterMatch[0].length).trim();
+              noteContent = content
+                .substring(frontmatterMatch[0].length)
+                .trim();
             } catch (e) {
-              console.error(`Fehler beim Parsen von YAML in ${file}:`, e);
+              console.error(
+                `[Main Process] Fehler beim Parsen von YAML in ${file}:`,
+                e
+              );
             }
           }
 
@@ -80,10 +91,18 @@ app.whenReady().then(async () => {
 
           return { id, title, content: noteContent, metadata };
         });
+
+      console.log(
+        `[Main Process] ${notes.length} Notizen erfolgreich verarbeitet.`
+      );
       return notes;
     } catch (error) {
-      console.error("Fehler beim Laden der Notizen:", error);
-      return [];
+      // HINZUGEFÜGT: Bessere Fehlermeldung
+      console.error(
+        "[Main Process] Kritischer Fehler beim Laden der Notizen:",
+        error
+      );
+      return []; // Wichtig: Gibt ein leeres Array zurück, damit die App nicht abstürzt
     }
   });
 

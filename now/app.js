@@ -23,7 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const metadataContainer = document.getElementById("metadata-container");
   const kanbanBoard = document.getElementById("kanban-board");
   const processNoteBtn = document.getElementById("process-note-btn");
-  const connectGoogleDriveBtn = document.getElementById("connect-google-drive-btn");
+  const connectGoogleDriveBtn = document.getElementById(
+    "connect-google-drive-btn"
+  );
   const googleDriveStatus = document.getElementById("google-drive-status");
 
   let notesDirectory = null;
@@ -407,24 +409,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const loadedNotes = await window.electronAPI.loadNotes(notesDirectory);
     notes = Array.isArray(loadedNotes) ? loadedNotes : [];
     await buildGraphIndex();
-    if (document.getElementById("toc-view").classList.contains("hidden")) {
-      switchView("toc-view");
-    }
+    switchView("toc-view");
   };
 
   const initApp = (folderPath) => {
     notesDirectory = folderPath;
     placeholder.classList.add("hidden");
-    editorContainer.classList.remove("hidden");
-    bottomContainer.classList.remove("hidden");
     loadNotes();
   };
 
   const runOnboardingOrInit = async () => {
     try {
-      console.log("runOnboardingOrInit called");
       const savedPath = await window.electronAPI.getSetting("notesDirectory");
-      console.log("savedPath:", savedPath);
       if (savedPath) {
         initApp(savedPath);
       } else {
@@ -452,9 +448,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const highlightSyntax = (text) => {
     let highlightedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    // NEU: Markdown-Links für Bookmarks hervorheben
     highlightedText = highlightedText.replace(
-      /\\\[(.*?)\\\\.?.*? (https?:\\/\\/[^\\s]+?)\\\\/g,
+      /\[(.*?)\]\((https?:\/\/[^\s]+)\)/g,
       '<a href="$2" class="bookmark-link" target="_blank">$1</a>'
     );
 
@@ -529,7 +524,7 @@ document.addEventListener("DOMContentLoaded", () => {
           console.error("Fehler beim Anstoßen der Synchronisierung:", error);
         }
       }
-      await buildGraphIndex(); // HINZUGEFÜGT: UI nach dem Speichern aktualisieren
+      await buildGraphIndex();
     }
   };
 
@@ -570,63 +565,65 @@ document.addEventListener("DOMContentLoaded", () => {
     connectGoogleDriveBtn.addEventListener("click", connectGoogleDrive);
   }
 
-  // NEU: Event Listener für "Finde Verbindungen" Button
   const findConnectionsBtn = document.getElementById("find-connections-btn");
   if (findConnectionsBtn) {
     findConnectionsBtn.addEventListener("click", async () => {
       if (!activeNoteId) {
-        alert("Bitte wählen Sie zuerst eine Notiz aus, um Verbindungen zu finden.");
+        alert(
+          "Bitte wählen Sie zuerst eine Notiz aus, um Verbindungen zu finden."
+        );
         return;
       }
 
-      const focusNote = notes.find(n => n.id === activeNoteId);
+      const focusNote = notes.find((n) => n.id === activeNoteId);
       if (!focusNote) {
         alert("Fokus-Notiz konnte nicht gefunden werden.");
         return;
       }
 
       const focusNoteContent = `# ${focusNote.title}\n\n${focusNote.content}`;
-      
-      // Filtere die Fokus-Notiz aus dem Archiv heraus
-      const allOtherNotes = notes.filter(n => n.id !== activeNoteId).map(n => ({
-        title: n.title,
-        content: `# ${n.title}\n\n${n.content}` // Format for AI prompt
-      }));
 
-      console.log("Frontend: Sende Anfrage an Backend...");
-      console.log("Frontend: Fokus-Notiz Inhalt:", focusNoteContent);
-      console.log("Frontend: Archiv-Notizen (Anzahl):", allOtherNotes.length);
+      const allOtherNotes = notes
+        .filter((n) => n.id !== activeNoteId)
+        .map((n) => ({
+          title: n.title,
+          content: `# ${n.title}\n\n${n.content}`,
+        }));
 
       findConnectionsBtn.textContent = "Suche Verbindungen...";
       findConnectionsBtn.disabled = true;
 
       try {
-        const response = await fetch("http://localhost:3000/api/suggest-connections", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ focusNoteContent, allNotes: allOtherNotes }),
-        });
+        const response = await fetch(
+          "http://localhost:3000/api/suggest-connections",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ focusNoteContent, allNotes: allOtherNotes }),
+          }
+        );
 
         if (!response.ok) {
-          console.error(`Frontend: HTTP-Fehler! Status: ${response.status}`);
           throw new Error(`HTTP-Fehler! Status: ${response.status}`);
         }
         const suggestions = await response.json();
-        console.log("Frontend: Empfangene Vorschläge:", suggestions);
 
         if (suggestions.length > 0) {
           let alertMessage = "Vorgeschlagene Verbindungen:\n\n";
           suggestions.forEach((s, index) => {
-            alertMessage += `${index + 1}. ${s.suggested_note_title}\n   Grund: ${s.reason_for_connection}\n\n`;
+            alertMessage += `${index + 1}. ${
+              s.suggested_note_title
+            }\n   Grund: ${s.reason_for_connection}\n\n`;
           });
           alert(alertMessage);
         } else {
           alert("Keine relevanten Verbindungen gefunden.");
         }
-
       } catch (error) {
-        console.error("Frontend: Fehler beim Finden von Verbindungen:", error);
-        alert("Es gab einen Fehler beim Suchen nach Verbindungen. (Läuft das Backend?)");
+        console.error("Fehler beim Finden von Verbindungen:", error);
+        alert(
+          "Es gab einen Fehler beim Suchen nach Verbindungen. (Läuft das Backend?)"
+        );
       } finally {
         findConnectionsBtn.innerHTML = `<span class="material-icons" style="font-size: 20px">psychology</span> Finde Verbindungen`;
         findConnectionsBtn.disabled = false;
@@ -654,19 +651,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const debouncedSave = debounce(saveNote, 500);
 
-  // --- NEU: URL-Markierung ---
   const markUrlAsBookmark = async (content) => {
-    const urlRegex = /https?:\/\/[^\s]+/g;
+    const urlRegex = /https?:\/\/[^\s)\]]+/g;
     let lastMatch;
     let match;
-    // Finde die letzte URL im Text
     while ((match = urlRegex.exec(content)) !== null) {
-        const url = match[0];
-        // Check if the text immediately preceding the URL is '[bookmark] '
-        const precedingText = content.substring(match.index - 11, match.index);
-        if (precedingText !== '[bookmark] ') { // Still check to avoid re-processing
-            lastMatch = match;
+      const url = match[0];
+      const precedingText = content.substring(0, match.index);
+      const linkFormatRegex = /\[.*?\]\(/g;
+      let inLink = false;
+      let linkMatch;
+      while ((linkMatch = linkFormatRegex.exec(precedingText)) !== null) {
+        if (precedingText.substring(linkMatch.index).indexOf(")") === -1) {
+          inLink = true;
+          break;
         }
+      }
+      if (!inLink) {
+        lastMatch = match;
+      }
     }
 
     if (lastMatch) {
@@ -679,18 +682,22 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify({ url }),
         });
         if (!response.ok) {
-          console.error("Fehler beim Abrufen des angereicherten Bookmarks:", response.status);
-          return content; // Return original content on error
+          console.error(
+            "Fehler beim Abrufen des angereicherten Bookmarks:",
+            response.status
+          );
+          return content;
         }
         const data = await response.json();
-        const formattedBookmark = data.bookmark; // Get the formatted string from backend
-
-        // Replace the original URL with the new formatted bookmark
-        return content.substring(0, urlIndex) + `[${formattedBookmark}](${url})` + content.substring(urlIndex + url.length);
-
+        const formattedBookmark = data.bookmark;
+        return (
+          content.substring(0, urlIndex) +
+          `[${formattedBookmark}](${url})` +
+          content.substring(urlIndex + url.length)
+        );
       } catch (error) {
         console.error("Fehler beim Anreichern der URL:", error);
-        return content; // Return original content on error
+        return content;
       }
     }
     return content;
@@ -713,7 +720,7 @@ document.addEventListener("DOMContentLoaded", () => {
     highlightLayer.scrollTop = noteContentInput.scrollTop;
     highlightLayer.scrollLeft = noteContentInput.scrollLeft;
     debouncedSave();
-    debouncedBookmark(); // Hinzugefügt
+    debouncedBookmark();
   });
   noteContentInput.addEventListener("scroll", () => {
     highlightLayer.scrollTop = noteContentInput.scrollTop;
@@ -746,7 +753,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }, 1000);
 
   splashScreen.addEventListener("click", () => {
-    splashScreen.classList.add("hidden-view");
+    splashScreen.classList.add("hidden");
+    // KORREKTUR: Entferne 'hidden-view' anstatt 'hidden'
     appContainer.classList.remove("hidden-view");
     runOnboardingOrInit();
   });
@@ -779,6 +787,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const newNoteId = await createNewNote(pageName);
         displayNote(newNoteId);
       }
+    } else if (target.classList.contains("bookmark-link")) {
+      e.preventDefault();
+      window.electronAPI.openExternal(target.href);
     } else {
       noteContentInput.focus();
     }
